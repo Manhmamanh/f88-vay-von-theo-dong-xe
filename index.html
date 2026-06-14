@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>F88 — Vay vốn theo dòng xe</title>
+
+<!-- Font Be Vietnam Pro (chuẩn dấu tiếng Việt) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+<!-- Icon Tabler -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+
+<style>
+  :root{
+    /* ====== Bảng màu thương hiệu F88 ====== */
+    --green:#00844A; --green-d:#006438; --green-l:#33A06E; --green-bg:#E6F3EC;
+    --gold:#F8C200; --gold-d:#D9A800;
+    --ink:#1A1A1A; --gray:#5F6368; --line:#e9eceb;
+    --radius:16px;
+    --shadow:0 10px 30px rgba(0,0,0,.08);
+    --shadow-sm:0 4px 14px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:#eef1f0;color:var(--ink);
+    font-family:'Be Vietnam Pro',system-ui,-apple-system,Arial,sans-serif;
+    padding:max(16px,env(safe-area-inset-top)) 12px 28px;
+    line-height:1.5;
+  }
+  .wrap{max-width:1180px;margin:0 auto;background:#fff;border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+
+  /* ====== Header ====== */
+  .hd{
+    position:relative;
+    background:linear-gradient(120deg,var(--green) 0%,var(--green-d) 100%);
+    padding:22px clamp(16px,4vw,30px);
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  .hd .logo88{
+    background:#fff;color:var(--green);font-weight:800;font-size:26px;letter-spacing:.5px;
+    padding:8px 15px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.15);line-height:1
+  }
+  .hd .ttl h1{color:#fff;font-weight:800;font-size:clamp(18px,2.4vw,24px);line-height:1.15;margin:0}
+  .hd .ttl .sub{color:#cdeede;font-weight:500;font-size:13px;margin-top:3px}
+  .hd .tools{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .hd .rate{color:#fff;font-weight:600;font-size:12px;text-align:right;line-height:1.25;opacity:.95}
+  .hd .rate b{color:var(--gold);font-size:18px;display:block;font-weight:800}
+  .editmode-btn{
+    border:1.5px solid rgba(255,255,255,.7);background:rgba(255,255,255,.08);color:#fff;
+    font-family:inherit;font-weight:700;font-size:13px;padding:10px 14px;border-radius:11px;
+    cursor:pointer;display:flex;align-items:center;gap:6px;transition:.15s
+  }
+  .editmode-btn:hover{background:rgba(255,255,255,.2)}
+  .editmode-btn.on{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+
+  /* ====== Băng thông báo chế độ chỉnh ảnh ====== */
+  .editbar{display:none;background:#fff7da;border-bottom:1px solid var(--gold);padding:11px clamp(16px,4vw,30px);font-size:13px;font-weight:600;color:#8a6d00}
+  .editbar.on{display:block}
+  .editbar i{color:var(--gold-d)}
+
+  /* ====== Vùng nội dung ====== */
+  .content{padding:clamp(16px,3vw,26px) clamp(14px,4vw,30px) 8px}
+
+  /* Segment Ô tô / Xe máy */
+  .seg-wrap{display:flex;gap:6px;background:var(--green-bg);padding:5px;border-radius:14px;max-width:360px;margin:0 auto 20px}
+  .seg{flex:1;padding:12px 8px;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;background:transparent;color:var(--green-d);transition:.15s;display:flex;align-items:center;justify-content:center;gap:7px}
+  .seg.on{background:var(--green);color:#fff;box-shadow:var(--shadow-sm)}
+
+  .label{font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;margin:0 0 12px}
+
+  /* ====== Hàng chọn hãng (cuộn ngang trên mobile) ====== */
+  .brands{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 12px;margin-bottom:6px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+  .brands::-webkit-scrollbar{height:6px}
+  .brands::-webkit-scrollbar-thumb{background:#d4dad7;border-radius:3px}
+  .brand{
+    scroll-snap-align:start;flex:0 0 auto;display:flex;align-items:center;gap:10px;
+    padding:9px 14px 9px 9px;border:1.5px solid var(--line);background:#fff;border-radius:14px;
+    cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:var(--ink);transition:.14s;white-space:nowrap
+  }
+  .brand:hover{border-color:var(--green-l);box-shadow:var(--shadow-sm)}
+  .brand.on{background:var(--green);border-color:var(--green);color:#fff;box-shadow:var(--shadow-sm)}
+  .brand .logo{position:relative;width:42px;height:42px;border-radius:11px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;flex:0 0 42px}
+  .brand .logo svg{width:34px;height:34px;display:block}
+  .brand .logo img{width:100%;height:100%;object-fit:contain;padding:3px}
+  .brand .logo.editable{outline:2px dashed var(--gold-d);outline-offset:-2px;cursor:pointer}
+  .brand .logo .cam{position:absolute;inset:0;background:rgba(0,0,0,.45);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .brand .meta{display:flex;flex-direction:column;line-height:1.1;text-align:left}
+  .brand .cnt{font-size:11px;font-weight:600;color:var(--gray);margin-top:2px}
+  .brand.on .cnt{color:#d6f0e2}
+
+  /* ====== Thanh lọc ====== */
+  .filter{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 16px}
+  .search{flex:1;min-width:200px;position:relative}
+  .search i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:19px}
+  .search input{width:100%;padding:12px 14px 12px 40px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;outline:none;transition:.15s}
+  .search input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+  select{padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:14px;font-weight:600;color:var(--ink);background:#fff;cursor:pointer;outline:none;transition:.15s}
+  select:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+
+  .cap{font-size:14px;font-weight:600;color:var(--gray);margin:0 0 16px}
+  .cap b{color:var(--green)}
+
+  /* ====== Lưới thẻ xe (tự co giãn mọi thiết bị) ====== */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+  @media(max-width:480px){.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}}
+
+  .card{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#fff;display:flex;flex-direction:column;transition:.18s;box-shadow:var(--shadow-sm)}
+  .card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--green-l)}
+  .card .photo{position:relative;aspect-ratio:4/3;background:linear-gradient(135deg,var(--green-bg),#fff);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .card .photo img{width:100%;height:100%;object-fit:cover}
+  .card .photo .ph-icon{font-size:64px;color:var(--green-l);opacity:.55}
+  .card .photo .tag88{position:absolute;top:9px;left:9px;background:var(--green);color:#fff;font-weight:800;font-size:11px;padding:3px 8px;border-radius:7px;border:1.5px solid var(--gold);z-index:2;letter-spacing:.5px}
+  .card .photo .yr{position:absolute;top:9px;right:9px;background:rgba(0,0,0,.55);color:#fff;font-weight:700;font-size:11px;padding:3px 8px;border-radius:7px;z-index:2}
+  .ph-edit{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;gap:8px}
+  .ph-btn{border:none;border-radius:9px;background:var(--gold);color:var(--ink);font-family:inherit;font-weight:800;font-size:12px;padding:9px 11px;cursor:pointer;display:flex;align-items:center;gap:5px}
+  .ph-btn.del{background:#fff;color:#c0392b}
+  .card .info{padding:13px 14px 14px;display:flex;flex-direction:column;flex:1}
+  .card .name{font-size:14.5px;font-weight:800;line-height:1.3;min-height:38px}
+  .card .seg-t{font-size:12px;font-weight:500;color:var(--gray);margin:3px 0 10px}
+  .card hr{border:none;border-top:1px solid var(--line);margin:0 0 10px}
+  .card .lim{font-size:11.5px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.4px}
+  .card .price{font-size:16px;font-weight:800;color:var(--green-d);margin:3px 0 13px}
+  .card .price small{font-size:12px;color:var(--gray);font-weight:600}
+  .cta{width:100%;border:none;border-radius:11px;background:var(--gold);color:var(--ink);font-family:inherit;font-weight:800;font-size:13.5px;padding:12px 4px;cursor:pointer;transition:.12s;margin-top:auto}
+  .cta:hover{background:#ffcf1f}
+  .cta:active{transform:translateY(1px)}
+
+  .empty{padding:50px 10px;text-align:center;color:var(--gray);font-weight:600}
+  .empty i{font-size:40px;color:var(--green-l);display:block;margin-bottom:8px}
+
+  /* ====== Thanh quyền lợi ====== */
+  .benefits{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;background:var(--green-bg);padding:18px clamp(16px,4vw,30px);margin-top:22px}
+  .benefit{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:var(--green-d)}
+  .benefit i{font-size:24px;background:#fff;color:var(--green);width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:0 0 42px;box-shadow:var(--shadow-sm)}
+
+  /* ====== Modal đăng ký ====== */
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;align-items:center;justify-content:center;padding:16px}
+  .overlay.show{display:flex}
+  .modal{background:#fff;border-radius:18px;max-width:430px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal .mh{background:var(--green);color:#fff;padding:17px 20px;display:flex;align-items:center;justify-content:space-between}
+  .modal .mh h3{margin:0;font-size:17px;font-weight:800}
+  .modal .mh button{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;line-height:1}
+  .modal .mb{padding:20px}
+  .modal .veh{background:var(--green-bg);border-radius:11px;padding:12px 14px;font-size:13.5px;font-weight:700;color:var(--green-d);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .modal label{display:block;font-size:13px;font-weight:700;color:var(--ink);margin:0 0 6px}
+  .modal input{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:11px;font-family:inherit;font-size:14px;margin-bottom:13px;outline:none}
+  .modal input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+  .modal .submit{width:100%;border:none;border-radius:12px;background:var(--gold);color:var(--ink);font-family:inherit;font-weight:800;font-size:15px;padding:14px;cursor:pointer}
+  .modal .submit:hover{background:#ffcf1f}
+  .ok{text-align:center;padding:14px 0}
+  .ok i{font-size:52px;color:var(--green)}
+
+  @media(max-width:560px){
+    body{padding:0 0 20px}
+    .wrap{border-radius:0;box-shadow:none}
+    .hd .rate{display:none}
+    .hd{border-radius:0}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- HEADER -->
+  <header class="hd">
+    <div class="logo88">F88</div>
+    <div class="ttl">
+      <h1>Vay vốn theo dòng xe</h1>
+      <div class="sub">Cầm cố ô tô · xe máy — giải ngân trong 15 phút</div>
+    </div>
+    <div class="tools">
+      <div class="rate">Lãi suất<b>ưu đãi</b></div>
+      <button class="editmode-btn" id="editToggle"><i class="ti ti-camera"></i> Chỉnh ảnh</button>
+    </div>
+  </header>
+
+  <!-- BĂNG HƯỚNG DẪN CHỈNH ẢNH -->
+  <div class="editbar" id="editbar">
+    <i class="ti ti-info-circle"></i>
+    Chế độ chỉnh ảnh đang BẬT: bấm <b>Đổi ảnh</b> trên thẻ xe để thêm ảnh xe thật, hoặc bấm vào ô <b>logo hãng</b> để thay logo. Ảnh được lưu ngay trong trình duyệt của bạn.
+  </div>
+
+  <main class="content">
+    <!-- Phân loại -->
+    <div class="seg-wrap">
+      <button class="seg on" data-type="oto"><i class="ti ti-car"></i> Ô tô</button>
+      <button class="seg" data-type="xemay"><i class="ti ti-motorbike"></i> Xe máy</button>
+    </div>
+
+    <!-- Chọn hãng -->
+    <div class="label">Chọn hãng xe</div>
+    <div class="brands" id="brands"></div>
+
+    <!-- Lọc -->
+    <div class="filter">
+      <div class="search">
+        <i class="ti ti-search"></i>
+        <input id="q" type="text" placeholder="Tìm tên xe..." />
+      </div>
+      <select id="priceFilter">
+        <option value="all">Tất cả mức vay</option>
+        <option value="0-100">Dưới 100 triệu</option>
+        <option value="100-300">100 – 300 triệu</option>
+        <option value="300-600">300 – 600 triệu</option>
+        <option value="600-99999">Trên 600 triệu</option>
+      </select>
+      <select id="sortBy">
+        <option value="def">Sắp xếp: Mặc định</option>
+        <option value="hi">Hạn mức cao → thấp</option>
+        <option value="lo">Hạn mức thấp → cao</option>
+        <option value="new">Đời xe mới nhất</option>
+      </select>
+    </div>
+
+    <div class="cap" id="cap"></div>
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <!-- QUYỀN LỢI -->
+  <div class="benefits">
+    <div class="benefit"><i class="ti ti-clock-hour-4"></i><span>Giải ngân chỉ 15 phút</span></div>
+    <div class="benefit"><i class="ti ti-car"></i><span>Vẫn được giữ &amp; dùng xe</span></div>
+    <div class="benefit"><i class="ti ti-file-check"></i><span>Thủ tục đơn giản, minh bạch</span></div>
+    <div class="benefit"><i class="ti ti-map-pin"></i><span>Hơn 800 phòng giao dịch</span></div>
+  </div>
+</div>
+
+<!-- MODAL ĐĂNG KÝ -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="mh">
+      <h3>Đăng ký vay vốn</h3>
+      <button id="close" aria-label="Đóng">&times;</button>
+    </div>
+    <div class="mb" id="modalBody"></div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="image/*" style="display:none" />
+
+<script>
+/* =====================================================================
+   THAY ẢNH XE THẬT / LOGO HÃNG
+   - Trên trang: bấm "Chỉnh ảnh" (góc phải header) → bấm "Đổi ảnh" trên
+     thẻ xe, hoặc bấm ô logo hãng để chọn ảnh từ máy. Ảnh tự thu nhỏ và
+     LƯU trong trình duyệt (localStorage) — vẫn còn sau khi tải lại.
+   - Trong code: điền img:'duong-dan.jpg' cho xe, hoặc thêm logo PNG vào
+     ô upload. Để trống thì dùng logo vẽ sẵn + icon mặc định.
+   ===================================================================== */
+var M = 1000000;
+
+/* ===== Logo hãng vẽ sẵn bằng SVG (hiển thị nét, hợp mọi thiết bị) ===== */
+var LOGOS = {
+  'Toyota':'<svg viewBox="0 0 48 48"><g fill="none" stroke="#EB0A1E" stroke-width="3.2"><ellipse cx="24" cy="24" rx="22" ry="14"/><ellipse cx="24" cy="19" rx="13" ry="6"/><ellipse cx="24" cy="27" rx="6" ry="10"/></g></svg>',
+  'Honda':'<svg viewBox="0 0 48 48"><rect x="6" y="14" width="36" height="20" rx="4" fill="none" stroke="#CC0000" stroke-width="3"/><path d="M16 19v10M16 24h16M32 19v10" fill="none" stroke="#CC0000" stroke-width="3.6" stroke-linecap="round"/></svg>',
+  'Hyundai':'<svg viewBox="0 0 48 48"><ellipse cx="24" cy="24" rx="22" ry="12.5" fill="none" stroke="#002C5F" stroke-width="2.6"/><text x="24" y="32" font-family="Arial" font-style="italic" font-weight="800" font-size="20" fill="#002C5F" text-anchor="middle">H</text></svg>',
+  'Mazda':'<svg viewBox="0 0 48 48"><ellipse cx="24" cy="24" rx="22" ry="12.5" fill="none" stroke="#1F3A5F" stroke-width="2.6"/><path d="M9 28c6-9 10-9 15-4 5-5 9-5 15 4-6-4-10-3-15 2-5-5-9-6-15-2z" fill="#1F3A5F"/></svg>',
+  'Mitsubishi':'<svg viewBox="0 0 48 48"><g fill="#E60012"><path d="M24 6 L30 16 L24 24 L18 16 Z"/><path d="M24 6 L30 16 L24 24 L18 16 Z" transform="rotate(120 24 24)"/><path d="M24 6 L30 16 L24 24 L18 16 Z" transform="rotate(240 24 24)"/></g></svg>',
+  'Ford':'<svg viewBox="0 0 48 48"><ellipse cx="24" cy="24" rx="23" ry="13" fill="#1C3D6E"/><text x="24" y="29" font-family="Georgia,serif" font-style="italic" font-weight="700" font-size="14" fill="#fff" text-anchor="middle">Ford</text></svg>',
+  'Kia':'<svg viewBox="0 0 48 48"><text x="24" y="31" font-family="Arial" font-weight="800" font-size="17" letter-spacing="-1" fill="#05141F" text-anchor="middle">KIA</text></svg>',
+  'Isuzu':'<svg viewBox="0 0 48 48"><text x="24" y="29" font-family="Arial" font-weight="800" font-size="12" fill="#DA251D" text-anchor="middle">ISUZU</text></svg>',
+  'VinFast':'<svg viewBox="0 0 48 48"><path d="M24 4 L42 10 V26 C42 36 34 42 24 45 C14 42 6 36 6 26 V10 Z" fill="#1E2952"/><text x="24" y="31" font-family="Arial" font-weight="800" font-size="18" fill="#fff" text-anchor="middle">V</text></svg>',
+  'Yamaha':'<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="none" stroke="#E2001A" stroke-width="3"/><g stroke="#E2001A" stroke-width="3" stroke-linecap="round" fill="none"><path d="M24 12 V36"/><path d="M14 33 L24 14 L34 33"/></g></svg>',
+  'Piaggio':'<svg viewBox="0 0 48 48"><path d="M24 4 L42 10 V26 C42 36 34 42 24 45 C14 42 6 36 6 26 V10 Z" fill="#003F87"/><text x="24" y="31" font-family="Arial" font-weight="800" font-size="18" fill="#fff" text-anchor="middle">P</text></svg>',
+  'SYM':'<svg viewBox="0 0 48 48"><text x="24" y="30" font-family="Arial" font-weight="800" font-size="15" fill="#0B4DA2" text-anchor="middle">SYM</text></svg>'
+};
+function svgLogo(b){ return LOGOS[b] || '<svg viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="10" fill="#E6F3EC"/><text x="24" y="31" font-family="Arial" font-weight="800" font-size="18" fill="#00844A" text-anchor="middle">'+(b.charAt(0))+'</text></svg>'; }
+/* Logo thật tải sẵn trong f88-xe-assets/logos/<hãng>.png; nếu thiếu file thì tự rớt về logo SVG vẽ sẵn */
+function defaultLogo(b){
+  return '<img src="f88-xe-assets/logos/'+b.toLowerCase()+'.png" alt="'+b+'" '
+       + 'onerror="this.onerror=null;this.insertAdjacentHTML(\'beforebegin\',svgLogo(\''+b+'\'));this.remove();" />';
+}
+/* Tạo tên file ảnh (phải khớp với tên file đã tải về trong f88-xe-assets/cars/) */
+function slug(s){
+  return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+          .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+}
+
+/* ===== Danh sách xe (cập nhật các đời xe hiện đại) ===== */
+var DATA = {
+  oto: [
+    { b:'Toyota', logo:'', m:[
+      { n:'Vios 1.5G',        y:2023, s:'Sedan hạng B',      min:250*M, max:430*M,  ic:'ti-car',   img:'' },
+      { n:'Yaris Cross HEV',  y:2023, s:'SUV đô thị',        min:450*M, max:720*M,  ic:'ti-car',   img:'' },
+      { n:'Corolla Cross 1.8',y:2022, s:'SUV 5 chỗ',         min:500*M, max:780*M,  ic:'ti-car',   img:'' },
+      { n:'Veloz Cross',      y:2022, s:'MPV 7 chỗ',         min:400*M, max:620*M,  ic:'ti-car',   img:'' },
+      { n:'Camry 2.5Q',       y:2023, s:'Sedan hạng D',      min:700*M, max:1050*M, ic:'ti-car',   img:'' },
+      { n:'Innova Cross',     y:2023, s:'MPV 7 chỗ',         min:600*M, max:900*M,  ic:'ti-car',   img:'' },
+      { n:'Fortuner 2.4',     y:2023, s:'SUV 7 chỗ',         min:700*M, max:1050*M, ic:'ti-car',   img:'' }
+    ]},
+    { b:'Honda', logo:'', m:[
+      { n:'City RS',     y:2023, s:'Sedan hạng B',  min:300*M, max:490*M,  ic:'ti-car', img:'' },
+      { n:'Civic RS',    y:2022, s:'Sedan hạng C',  min:500*M, max:780*M,  ic:'ti-car', img:'' },
+      { n:'CR-V 1.5L',   y:2023, s:'SUV 5/7 chỗ',   min:650*M, max:980*M,  ic:'ti-car', img:'' },
+      { n:'HR-V',        y:2022, s:'SUV đô thị',    min:450*M, max:720*M,  ic:'ti-car', img:'' },
+      { n:'Accord',      y:2023, s:'Sedan hạng D',  min:700*M, max:1000*M, ic:'ti-car', img:'' },
+      { n:'BR-V',        y:2023, s:'MPV 7 chỗ',     min:400*M, max:620*M,  ic:'ti-car', img:'' }
+    ]},
+    { b:'Hyundai', logo:'', m:[
+      { n:'Grand i10',  y:2022, s:'Hatchback hạng A', min:220*M, max:360*M,  ic:'ti-car', img:'' },
+      { n:'Accent',     y:2023, s:'Sedan hạng B',     min:300*M, max:490*M,  ic:'ti-car', img:'' },
+      { n:'Creta',      y:2022, s:'SUV đô thị',       min:400*M, max:620*M,  ic:'ti-car', img:'' },
+      { n:'Tucson',     y:2022, s:'SUV 5 chỗ',        min:500*M, max:800*M,  ic:'ti-car', img:'' },
+      { n:'SantaFe',    y:2023, s:'SUV 7 chỗ',        min:700*M, max:1050*M, ic:'ti-car', img:'' },
+      { n:'Stargazer',  y:2023, s:'MPV 7 chỗ',        min:350*M, max:560*M,  ic:'ti-car', img:'' }
+    ]},
+    { b:'Mazda', logo:'', m:[
+      { n:'Mazda2', y:2023, s:'Sedan hạng B', min:280*M, max:460*M, ic:'ti-car', img:'' },
+      { n:'Mazda3', y:2022, s:'Sedan hạng C', min:400*M, max:650*M, ic:'ti-car', img:'' },
+      { n:'Mazda6', y:2022, s:'Sedan hạng D', min:500*M, max:780*M, ic:'ti-car', img:'' },
+      { n:'CX-3',   y:2022, s:'SUV đô thị',   min:350*M, max:560*M, ic:'ti-car', img:'' },
+      { n:'CX-5',   y:2023, s:'SUV 5 chỗ',    min:500*M, max:800*M, ic:'ti-car', img:'' },
+      { n:'CX-8',   y:2022, s:'SUV 7 chỗ',    min:600*M, max:920*M, ic:'ti-car', img:'' }
+    ]},
+    { b:'Mitsubishi', logo:'', m:[
+      { n:'Attrage',    y:2022, s:'Sedan hạng B', min:250*M, max:420*M, ic:'ti-car',   img:'' },
+      { n:'Xpander',    y:2022, s:'MPV 7 chỗ',    min:350*M, max:560*M, ic:'ti-car',   img:'' },
+      { n:'Xforce',     y:2024, s:'SUV đô thị',   min:400*M, max:620*M, ic:'ti-car',   img:'' },
+      { n:'Outlander',  y:2022, s:'SUV 5 chỗ',    min:500*M, max:780*M, ic:'ti-car',   img:'' },
+      { n:'Triton',     y:2023, s:'Bán tải',      min:450*M, max:720*M, ic:'ti-truck', img:'' }
+    ]},
+    { b:'Ford', logo:'', m:[
+      { n:'Territory',       y:2022, s:'SUV 5 chỗ', min:500*M, max:780*M,  ic:'ti-car',   img:'' },
+      { n:'Ranger XLS',      y:2023, s:'Bán tải',   min:500*M, max:820*M,  ic:'ti-truck', img:'' },
+      { n:'Ranger Wildtrak', y:2023, s:'Bán tải',   min:650*M, max:980*M,  ic:'ti-truck', img:'' },
+      { n:'Everest',         y:2023, s:'SUV 7 chỗ', min:700*M, max:1100*M, ic:'ti-car',   img:'' },
+      { n:'Explorer',        y:2022, s:'SUV 7 chỗ', min:900*M, max:1400*M, ic:'ti-car',   img:'' }
+    ]},
+    { b:'Kia', logo:'', m:[
+      { n:'Morning',   y:2022, s:'Hatchback hạng A', min:200*M, max:340*M,  ic:'ti-car', img:'' },
+      { n:'Soluto',    y:2022, s:'Sedan hạng B',     min:250*M, max:420*M,  ic:'ti-car', img:'' },
+      { n:'K3',        y:2022, s:'Sedan hạng C',     min:350*M, max:560*M,  ic:'ti-car', img:'' },
+      { n:'Seltos',    y:2022, s:'SUV đô thị',       min:400*M, max:650*M,  ic:'ti-car', img:'' },
+      { n:'Sportage',  y:2023, s:'SUV 5 chỗ',        min:550*M, max:850*M,  ic:'ti-car', img:'' },
+      { n:'Carnival',  y:2022, s:'MPV cao cấp',      min:800*M, max:1250*M, ic:'ti-car', img:'' }
+    ]},
+    { b:'Isuzu', logo:'', m:[
+      { n:'D-Max', y:2022, s:'Bán tải',   min:400*M, max:650*M, ic:'ti-truck', img:'' },
+      { n:'Mu-X',  y:2022, s:'SUV 7 chỗ', min:550*M, max:850*M, ic:'ti-car',   img:'' }
+    ]},
+    { b:'VinFast', logo:'', m:[
+      { n:'Fadil',     y:2022, s:'Hatchback hạng A',   min:220*M, max:360*M,  ic:'ti-car', img:'' },
+      { n:'VF5 Plus',  y:2023, s:'SUV đô thị (điện)',  min:300*M, max:480*M,  ic:'ti-car', img:'' },
+      { n:'VF6',       y:2024, s:'SUV hạng B (điện)',  min:450*M, max:700*M,  ic:'ti-car', img:'' },
+      { n:'VF7',       y:2024, s:'SUV hạng C (điện)',  min:600*M, max:900*M,  ic:'ti-car', img:'' },
+      { n:'VF8',       y:2023, s:'SUV hạng D (điện)',  min:700*M, max:1050*M, ic:'ti-car', img:'' },
+      { n:'VF9',       y:2023, s:'SUV hạng E (điện)',  min:900*M, max:1400*M, ic:'ti-car', img:'' }
+    ]}
+  ],
+  xemay: [
+    { b:'Honda', logo:'', m:[
+      { n:'SH 160i',       y:2023, s:'Tay ga cao cấp',   min:50*M, max:95*M, ic:'ti-motorbike', img:'' },
+      { n:'SH Mode 125',   y:2023, s:'Tay ga',           min:40*M, max:75*M, ic:'ti-motorbike', img:'' },
+      { n:'Air Blade 160', y:2023, s:'Tay ga thể thao',  min:25*M, max:50*M, ic:'ti-motorbike', img:'' },
+      { n:'Vision 110',    y:2023, s:'Tay ga phổ thông', min:18*M, max:34*M, ic:'ti-motorbike', img:'' },
+      { n:'Lead 125',      y:2023, s:'Tay ga',           min:22*M, max:42*M, ic:'ti-motorbike', img:'' },
+      { n:'Vario 160',     y:2023, s:'Tay ga thể thao',  min:30*M, max:55*M, ic:'ti-motorbike', img:'' },
+      { n:'Winner X 150',  y:2023, s:'Xe côn tay',       min:22*M, max:42*M, ic:'ti-motorbike', img:'' }
+    ]},
+    { b:'Yamaha', logo:'', m:[
+      { n:'Exciter 155 VVA',    y:2023, s:'Xe côn tay',       min:25*M, max:46*M, ic:'ti-motorbike', img:'' },
+      { n:'NVX 155',            y:2023, s:'Tay ga thể thao',  min:28*M, max:52*M, ic:'ti-motorbike', img:'' },
+      { n:'Janus 125',          y:2023, s:'Tay ga',           min:18*M, max:34*M, ic:'ti-motorbike', img:'' },
+      { n:'Grande Hybrid 125',  y:2023, s:'Tay ga',           min:22*M, max:42*M, ic:'ti-motorbike', img:'' },
+      { n:'FreeGo 125',         y:2022, s:'Tay ga',           min:18*M, max:34*M, ic:'ti-motorbike', img:'' }
+    ]},
+    { b:'Piaggio', logo:'', m:[
+      { n:'Vespa Sprint 125',    y:2023, s:'Tay ga nhập khẩu', min:45*M, max:85*M,  ic:'ti-motorbike', img:'' },
+      { n:'Vespa Primavera 125', y:2023, s:'Tay ga nhập khẩu', min:45*M, max:85*M,  ic:'ti-motorbike', img:'' },
+      { n:'Vespa GTS 300',       y:2023, s:'Tay ga cao cấp',   min:70*M, max:130*M, ic:'ti-motorbike', img:'' },
+      { n:'Liberty 125',         y:2023, s:'Tay ga nhập khẩu', min:35*M, max:65*M,  ic:'ti-motorbike', img:'' },
+      { n:'Medley 150',          y:2023, s:'Tay ga',           min:55*M, max:100*M, ic:'ti-motorbike', img:'' }
+    ]},
+    { b:'SYM', logo:'', m:[
+      { n:'Attila V 125', y:2022, s:'Tay ga',           min:18*M, max:34*M, ic:'ti-motorbike', img:'' },
+      { n:'Galaxy 125',   y:2022, s:'Tay ga phổ thông', min:14*M, max:26*M, ic:'ti-motorbike', img:'' },
+      { n:'Elite 125',    y:2022, s:'Tay ga',           min:16*M, max:30*M, ic:'ti-motorbike', img:'' }
+    ]},
+    { b:'VinFast', logo:'', m:[
+      { n:'Klara S',  y:2023, s:'Xe máy điện', min:18*M, max:34*M, ic:'ti-motorbike', img:'' },
+      { n:'Theon S',  y:2023, s:'Xe máy điện', min:28*M, max:52*M, ic:'ti-motorbike', img:'' },
+      { n:'Vento S',  y:2023, s:'Xe máy điện', min:25*M, max:46*M, ic:'ti-motorbike', img:'' },
+      { n:'Feliz S',  y:2023, s:'Xe máy điện', min:16*M, max:30*M, ic:'ti-motorbike', img:'' },
+      { n:'Evo200',   y:2023, s:'Xe máy điện', min:12*M, max:24*M, ic:'ti-motorbike', img:'' }
+    ]}
+  ]
+};
+
+var type = 'oto', bi = 0, editMode = false;
+var pendingApply = null;
+
+var $ = function(id){ return document.getElementById(id); };
+var tr = function(v){ return (v/M).toLocaleString('vi-VN',{maximumFractionDigits:0}); };
+var price = function(v){ return tr(v.min)+' – '+tr(v.max)+' <small>triệu</small>'; };
+
+/* ===== Kho ảnh người dùng tự thay (lưu trong trình duyệt) ===== */
+var STORE = {};
+try{ STORE = JSON.parse(localStorage.getItem('f88-images') || '{}'); }catch(e){ STORE = {}; }
+function saveStore(){
+  try{ localStorage.setItem('f88-images', JSON.stringify(STORE)); }
+  catch(e){ alert('Bộ nhớ trình duyệt đã đầy — hãy xoá bớt ảnh đã thay hoặc dùng ảnh nhỏ hơn.'); }
+}
+function carKey(brand, name){ return 'car|'+type+'|'+brand+'|'+name; }
+function logoKey(brand){ return 'logo|'+type+'|'+brand; }
+function carImg(brand, v){ return STORE[carKey(brand, v.n)] || v.img || ''; }
+function brandLogoImg(br){ return STORE[logoKey(br.b)] || br.logo || ''; }
+
+/* Thu nhỏ ảnh trước khi lưu cho nhẹ */
+function shrink(dataURL, maxW, asPng, cb){
+  var img = new Image();
+  img.onload = function(){
+    var scale = Math.min(1, maxW / img.width);
+    var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    cb(asPng ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.82));
+  };
+  img.onerror = function(){ cb(dataURL); };
+  img.src = dataURL;
+}
+function pickImage(asPng, applyFn){
+  pendingApply = function(raw){
+    shrink(raw, asPng ? 240 : 800, asPng, function(out){
+      applyFn(out); saveStore(); renderBrands(); renderPanel();
+    });
+  };
+  $('fileInput').click();
+}
+$('fileInput').onchange = function(){
+  var f = this.files && this.files[0]; if(!f){ return; }
+  var r = new FileReader();
+  r.onload = function(){ if(pendingApply){ pendingApply(r.result); } };
+  r.readAsDataURL(f);
+  this.value = '';
+};
+
+/* ===== Danh sách hãng ===== */
+function renderBrands(){
+  var arr = DATA[type], h = '';
+  for(var i=0;i<arr.length;i++){
+    var up = brandLogoImg(arr[i]);
+    var inner = up ? '<img src="'+up+'" alt="'+arr[i].b+'" />' : defaultLogo(arr[i].b);
+    if(editMode) inner += '<span class="cam"><i class="ti ti-camera"></i></span>';
+    h += '<button class="brand'+(i===bi?' on':'')+'" data-i="'+i+'">'
+       + '<span class="logo'+(editMode?' editable':'')+'" data-i="'+i+'">'+inner+'</span>'
+       + '<span class="meta"><span>'+arr[i].b+'</span><span class="cnt">'+arr[i].m.length+' dòng xe</span></span>'
+       + '</button>';
+  }
+  $('brands').innerHTML = h;
+  var btns = document.querySelectorAll('#brands .brand');
+  for(var j=0;j<btns.length;j++){
+    btns[j].onclick = function(){ bi = +this.getAttribute('data-i'); renderBrands(); renderPanel(); };
+  }
+  if(editMode){
+    var logos = document.querySelectorAll('#brands .logo.editable');
+    for(var k=0;k<logos.length;k++){
+      logos[k].onclick = function(ev){
+        ev.stopPropagation();
+        var br = DATA[type][+this.getAttribute('data-i')];
+        pickImage(true, function(out){ STORE[logoKey(br.b)] = out; });
+      };
+    }
+  }
+}
+
+/* ===== Lọc + sắp xếp ===== */
+function getFiltered(){
+  var arr = DATA[type][bi].m.slice();
+  var q = ($('q').value || '').trim().toLowerCase();
+  var pf = $('priceFilter').value, lo = 0, hi = Infinity;
+  if(pf !== 'all'){ var p = pf.split('-'); lo = +p[0]*M; hi = +p[1]*M; }
+  arr = arr.filter(function(v){
+    var okName = !q || v.n.toLowerCase().indexOf(q) >= 0;
+    var okPrice = (v.max >= lo) && (v.min <= hi);
+    return okName && okPrice;
+  });
+  var sb = $('sortBy').value;
+  if(sb==='hi') arr.sort(function(a,b){ return b.max-a.max; });
+  else if(sb==='lo') arr.sort(function(a,b){ return a.min-b.min; });
+  else if(sb==='new') arr.sort(function(a,b){ return b.y-a.y; });
+  return arr;
+}
+
+/* ===== Một thẻ xe ===== */
+function cardHTML(v, i, brandName){
+  var hasUser = !!STORE[carKey(brandName, v.n)];
+  /* Ưu tiên: ảnh bạn tự tải lên > ảnh gắn trong code > ảnh tải sẵn trong f88-xe-assets/cars/.
+     Nếu file ảnh không có thì onerror tự rớt về icon mặc định. */
+  var src = STORE[carKey(brandName, v.n)] || v.img || ('f88-xe-assets/cars/'+slug(type+'_'+brandName+'_'+v.n)+'.jpg');
+  var iconHTML = '<i class=\\\'ti '+v.ic+' ph-icon\\\'></i>';
+  var photo = '<img src="'+src+'" alt="'+brandName+' '+v.n+'" loading="lazy" '
+            + 'onerror="this.onerror=null;this.parentNode.insertAdjacentHTML(\'afterbegin\',\''+iconHTML+'\');this.remove();" />';
+  var edit = '';
+  if(editMode){
+    edit = '<div class="ph-edit">'
+         + '<button class="ph-btn" data-act="set" data-i="'+i+'"><i class="ti ti-camera"></i> Đổi ảnh</button>'
+         + (hasUser ? '<button class="ph-btn del" data-act="del" data-i="'+i+'" title="Khôi phục ảnh gốc"><i class="ti ti-trash"></i></button>' : '')
+         + '</div>';
+  }
+  return '<div class="card">'
+    + '<div class="photo">'+photo+'<div class="tag88">F88</div><div class="yr">'+v.y+'</div>'+edit+'</div>'
+    + '<div class="info">'
+    +   '<div class="name">'+brandName+' '+v.n+'</div>'
+    +   '<div class="seg-t">'+v.s+'</div><hr/>'
+    +   '<div class="lim">Hạn mức cho vay</div>'
+    +   '<div class="price">'+price(v)+'</div>'
+    +   '<button class="cta" data-i="'+i+'">Đăng ký vay ngay</button>'
+    + '</div></div>';
+}
+
+/* ===== Lưới ===== */
+function renderPanel(){
+  var brand = DATA[type][bi];
+  var list = getFiltered();
+  $('cap').innerHTML = 'Dòng '+(type==='oto'?'ô tô':'xe máy')+' <b>'+brand.b+'</b> — tìm thấy <b>'+list.length+'</b> xe';
+
+  var grid = $('grid');
+  if(list.length === 0){
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><i class="ti ti-mood-empty"></i>Không tìm thấy xe phù hợp với bộ lọc.</div>';
+    return;
+  }
+  var cards = '';
+  for(var i=0;i<list.length;i++) cards += cardHTML(list[i], i, brand.b);
+  grid.innerHTML = cards;
+
+  var ctas = grid.querySelectorAll('.cta');
+  for(var c=0;c<ctas.length;c++) ctas[c].onclick = function(){
+    var v = list[+this.getAttribute('data-i')];
+    openModal(brand.b, v.n, v.y);
+  };
+  if(editMode){
+    var pbtns = grid.querySelectorAll('.ph-btn');
+    for(var b=0;b<pbtns.length;b++) pbtns[b].onclick = function(){
+      var v = list[+this.getAttribute('data-i')];
+      if(this.getAttribute('data-act') === 'del'){
+        delete STORE[carKey(brand.b, v.n)]; saveStore(); renderPanel();
+      } else {
+        pickImage(false, function(out){ STORE[carKey(brand.b, v.n)] = out; });
+      }
+    };
+  }
+}
+
+/* ===== Modal đăng ký ===== */
+function openModal(brand, name, yr){
+  $('modalBody').innerHTML =
+      '<div class="veh"><i class="ti ti-car"></i> '+brand+' '+name+' · đời '+yr+'</div>'
+    + '<label>Họ và tên</label><input id="f-name" type="text" placeholder="Nguyễn Văn A" />'
+    + '<label>Số điện thoại</label><input id="f-phone" type="tel" inputmode="numeric" placeholder="09xx xxx xxx" />'
+    + '<label>Tỉnh / Thành phố</label><input id="f-city" type="text" placeholder="Hà Nội" />'
+    + '<button class="submit" id="submit">Gửi đăng ký</button>';
+  $('overlay').classList.add('show');
+  $('submit').onclick = function(){
+    var nm = $('f-name').value.trim(), ph = $('f-phone').value.trim();
+    if(!nm || !ph){ alert('Vui lòng nhập Họ tên và Số điện thoại.'); return; }
+    /* === GẮN BACKEND THẬT Ở ĐÂY: gửi {nm, ph, city, brand, name, yr} lên server/API === */
+    $('modalBody').innerHTML =
+        '<div class="ok"><i class="ti ti-circle-check"></i>'
+      + '<h3 style="color:var(--green);margin:10px 0 4px">Đăng ký thành công!</h3>'
+      + '<p style="color:var(--gray);font-size:14px;margin:0">F88 sẽ liên hệ với bạn trong ít phút để tư vấn khoản vay cho <b>'+brand+' '+name+'</b>.</p></div>';
+  };
+}
+$('close').onclick = function(){ $('overlay').classList.remove('show'); };
+$('overlay').onclick = function(e){ if(e.target === this) this.classList.remove('show'); };
+
+/* ===== Sự kiện chung ===== */
+var segs = document.querySelectorAll('.seg');
+for(var k=0;k<segs.length;k++){
+  segs[k].onclick = function(){
+    type = this.getAttribute('data-type'); bi = 0;
+    for(var m=0;m<segs.length;m++) segs[m].classList.remove('on');
+    this.classList.add('on');
+    renderBrands(); renderPanel();
+  };
+}
+$('editToggle').onclick = function(){
+  editMode = !editMode;
+  this.classList.toggle('on', editMode);
+  $('editbar').classList.toggle('on', editMode);
+  renderBrands(); renderPanel();
+};
+$('q').oninput = renderPanel;
+$('priceFilter').onchange = renderPanel;
+$('sortBy').onchange = renderPanel;
+
+/* ===== Khởi tạo =====
+   Thứ tự ưu tiên dữ liệu:
+   1) localStorage 'f88-xe-data' (do trang admin lưu — xem ngay trên máy bạn)
+   2) file f88-xe-data.json đặt cạnh trang (dùng khi đăng web cho khách)
+   3) dữ liệu mặc định gắn sẵn trong trang */
+function boot(){ renderBrands(); renderPanel(); }
+function applyData(d){ if(d && d.oto && d.xemay){ DATA = d; } }
+(function(){
+  try{
+    var saved = localStorage.getItem('f88-xe-data');
+    if(saved){ applyData(JSON.parse(saved)); boot(); return; }
+  }catch(e){}
+  if(window.fetch){
+    fetch('f88-xe-data.json').then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){ applyData(j); boot(); })
+      .catch(boot);
+  } else { boot(); }
+})();
+</script>
+</body>
+</html>

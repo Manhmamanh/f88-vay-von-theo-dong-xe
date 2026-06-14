@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>F88 — Quản trị dữ liệu xe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+<style>
+  :root{
+    --green:#00844A; --green-d:#006438; --green-l:#33A06E; --green-bg:#E6F3EC;
+    --gold:#F8C200; --gold-d:#D9A800;
+    --ink:#1A1A1A; --gray:#5F6368; --line:#e6e9e8; --red:#c0392b;
+    --shadow-sm:0 3px 12px rgba(0,0,0,.07);
+  }
+  *{box-sizing:border-box;font-family:'Be Vietnam Pro',system-ui,Arial,sans-serif}
+  body{margin:0;background:#eef1f0;color:var(--ink)}
+
+  /* Toolbar */
+  .bar{position:sticky;top:0;z-index:20;background:linear-gradient(120deg,var(--green),var(--green-d));color:#fff;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 18px}
+  .bar .logo88{background:#fff;color:var(--green);font-weight:800;font-size:20px;padding:5px 11px;border-radius:9px}
+  .bar h1{font-size:16px;font-weight:700;margin:0}
+  .bar .spacer{flex:1}
+  .bar .saved{font-size:12px;font-weight:600;background:rgba(255,255,255,.16);padding:6px 11px;border-radius:8px;display:flex;align-items:center;gap:6px}
+  .btn{border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:13px;padding:10px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:.13s;white-space:nowrap}
+  .btn.gold{background:var(--gold);color:var(--ink)} .btn.gold:hover{background:#ffcf1f}
+  .btn.ghost{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.55)} .btn.ghost:hover{background:rgba(255,255,255,.22)}
+  .btn.light{background:#fff;color:var(--green-d)} .btn.light:hover{background:#f1f6f3}
+  .btn.danger{background:#fff;color:var(--red);border:1.5px solid #f0c8c2} .btn.danger:hover{background:#fdeceA}
+  .btn.sm{padding:7px 10px;font-size:12px}
+
+  .guide{background:#fff7da;border-bottom:1px solid var(--gold);padding:11px 18px;font-size:13px;color:#7a6000;line-height:1.55}
+  .guide b{color:#6a5400}
+  .guide ol{margin:6px 0 0;padding-left:20px}
+
+  .seg-wrap{display:flex;gap:6px;background:var(--green-bg);padding:5px;border-radius:12px;max-width:320px;margin:16px auto 0}
+  .seg{flex:1;padding:10px;border:none;border-radius:9px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;background:transparent;color:var(--green-d)}
+  .seg.on{background:var(--green);color:#fff}
+
+  .layout{display:grid;grid-template-columns:260px 1fr;gap:16px;max-width:1200px;margin:16px auto;padding:0 16px 40px}
+  @media(max-width:760px){.layout{grid-template-columns:1fr}}
+
+  .panel{background:#fff;border-radius:16px;box-shadow:var(--shadow-sm);padding:16px}
+  .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin:0 0 12px}
+
+  /* Brand list */
+  .brand-row{display:flex;align-items:center;gap:9px;padding:8px;border:1.5px solid var(--line);border-radius:11px;margin-bottom:8px;cursor:pointer;transition:.12s}
+  .brand-row:hover{border-color:var(--green-l)}
+  .brand-row.on{background:var(--green);border-color:var(--green);color:#fff}
+  .brand-row .lg{width:34px;height:34px;border-radius:8px;background:#fff;border:1px solid var(--line);flex:0 0 34px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .brand-row .lg img{width:100%;height:100%;object-fit:contain;padding:2px}
+  .brand-row .lg svg{width:26px;height:26px}
+  .brand-row .nm{font-weight:700;font-size:14px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brand-row .nm small{display:block;font-weight:500;font-size:11px;opacity:.7}
+  .mini{border:none;background:transparent;color:inherit;cursor:pointer;font-size:16px;opacity:.6;padding:3px}
+  .mini:hover{opacity:1}
+  .brand-row.on .mini{color:#fff}
+
+  /* Brand header (right) */
+  .bhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:16px}
+  .bhead .biglogo{width:64px;height:64px;border-radius:14px;border:1.5px dashed var(--gold-d);background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;position:relative;flex:0 0 64px}
+  .bhead .biglogo img{width:100%;height:100%;object-fit:contain;padding:4px}
+  .bhead .biglogo svg{width:46px;height:46px}
+  .bhead .biglogo .ov{position:absolute;inset:0;background:rgba(0,0,0,.42);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;opacity:0;transition:.12s}
+  .bhead .biglogo:hover .ov{opacity:1}
+  .bhead .bname{flex:1;min-width:180px}
+  .bhead .bname label{font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.4px}
+  .bhead .bname input{width:100%;font-size:18px;font-weight:800;border:none;border-bottom:2px solid var(--line);padding:6px 2px;outline:none}
+  .bhead .bname input:focus{border-color:var(--green)}
+
+  /* Car cards */
+  .cars{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+  .ccard{border:1.5px solid var(--line);border-radius:14px;overflow:hidden;background:#fcfdfc;display:flex;flex-direction:column}
+  .ccard .top{display:flex;gap:12px;padding:12px}
+  .ccard .thumb{width:96px;height:72px;flex:0 0 96px;border-radius:10px;background:linear-gradient(135deg,var(--green-bg),#fff);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;cursor:pointer;border:1px solid var(--line)}
+  .ccard .thumb img{width:100%;height:100%;object-fit:cover}
+  .ccard .thumb i{font-size:34px;color:var(--green-l);opacity:.6}
+  .ccard .thumb .ov{position:absolute;inset:0;background:rgba(0,0,0,.4);color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:700;opacity:0;transition:.12s}
+  .ccard .thumb:hover .ov{opacity:1}
+  .ccard .fields{flex:1;display:flex;flex-direction:column;gap:7px}
+  .fld{display:flex;flex-direction:column;gap:3px}
+  .fld label{font-size:10.5px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.3px}
+  .fld input,.fld select{border:1.5px solid var(--line);border-radius:8px;padding:7px 9px;font-family:inherit;font-size:13px;outline:none;width:100%}
+  .fld input:focus,.fld select:focus{border-color:var(--green)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:0 12px 12px}
+  .ccard .foot{display:flex;align-items:center;gap:6px;border-top:1px solid var(--line);padding:9px 12px;background:#fff}
+  .ccard .foot .nm-line{flex:1;font-size:11px;color:var(--gray)}
+  .addcar{border:2px dashed var(--green-l);border-radius:14px;background:var(--green-bg);color:var(--green-d);font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;min-height:120px}
+  .addcar:hover{background:#dceee4}
+
+  .empty{padding:40px;text-align:center;color:var(--gray);font-weight:600}
+  .hint{font-size:11.5px;color:var(--gray);margin-top:4px}
+  input[type=file]{display:none}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="logo88">F88</div>
+  <h1>Quản trị dữ liệu xe</h1>
+  <span class="saved" id="savedTag"><i class="ti ti-check"></i> Đã lưu</span>
+  <div class="spacer"></div>
+  <button class="btn light" id="openSite"><i class="ti ti-external-link"></i> Mở trang web</button>
+  <button class="btn ghost" id="importBtn"><i class="ti ti-upload"></i> Nhập file</button>
+  <button class="btn ghost" id="resetBtn"><i class="ti ti-rotate"></i> Khôi phục mặc định</button>
+  <button class="btn gold" id="exportBtn"><i class="ti ti-download"></i> Tải file dữ liệu (.json)</button>
+</div>
+
+<div class="guide">
+  <b>Cách dùng — 3 bước:</b>
+  <ol>
+    <li>Sửa nội dung bên dưới (thêm/xóa hãng, xe, đổi tên, hạn mức, ảnh…). Mọi thay đổi <b>tự lưu</b> vào máy bạn để xem thử ngay trên “Mở trang web”.</li>
+    <li>Xem ổn rồi, bấm <b>“Tải file dữ liệu (.json)”</b> để tải về file <b>f88-xe-data.json</b>.</li>
+    <li>Đưa file <b>f88-xe-data.json</b> lên web (cùng thư mục với trang chính) là khách sẽ thấy nội dung mới.</li>
+  </ol>
+</div>
+
+<div class="seg-wrap">
+  <button class="seg on" data-type="oto"><i class="ti ti-car"></i> Ô tô</button>
+  <button class="seg" data-type="xemay"><i class="ti ti-motorbike"></i> Xe máy</button>
+</div>
+
+<div class="layout">
+  <div class="panel">
+    <h2>Hãng xe</h2>
+    <div id="brandList"></div>
+    <button class="btn light sm" id="addBrand" style="width:100%;justify-content:center;margin-top:6px"><i class="ti ti-plus"></i> Thêm hãng</button>
+  </div>
+  <div class="panel" id="editor"></div>
+</div>
+
+<input type="file" id="fileImg" accept="image/*" />
+<input type="file" id="fileJson" accept="application/json,.json" />
+
+<script>
+var M = 1000000;
+
+/* ===== Dữ liệu mặc định (giống hệt trang web) ===== */
+var DEFAULT_DATA = {
+  oto: [
+    { b:'Toyota', logo:'', m:[
+      { n:'Vios 1.5G',        y:2023, s:'Sedan hạng B',      min:250*M, max:430*M,  ic:'ti-car',   img:'' },
+      { n:'Yaris Cross HEV',  y:2023, s:'SUV đô thị',        min:450*M, max:720*M,  ic:'ti-car',   img:'' },
+      { n:'Corolla Cross 1.8',y:2022, s:'SUV 5 chỗ',         min:500*M, max:780*M,  ic:'ti-car',   img:'' },
+      { n:'Veloz Cross',      y:2022, s:'MPV 7 chỗ',         min:400*M, max:620*M,  ic:'ti-car',   img:'' },
+      { n:'Camry 2.5Q',       y:2023, s:'Sedan hạng D',      min:700*M, max:1050*M, ic:'ti-car',   img:'' },
+      { n:'Innova Cross',     y:2023, s:'MPV 7 chỗ',         min:600*M, max:900*M,  ic:'ti-car',   img:'' },
+      { n:'Fortuner 2.4',     y:2023, s:'SUV 7 chỗ',         min:700*M, max:1050*M, ic:'ti-car',   img:'' }
+    ]},
+    { b:'Honda', logo:'', m:[
+      { n:'City RS',     y:2023, s:'Sedan hạng B',  min:300*M, max:490*M,  ic:'ti-car', img:'' },
+      { n:'Civic RS',    y:2022, s:'Sedan hạng C',  min:500*M, max:780*M,  ic:'ti-car', img:'' },
+      { n:'CR-V 1.5L',   y:2023, s:'SUV 5/7 chỗ',   min:650*M, max:980*M,  ic:'ti-car', img:'' },
+      { n:'HR-V',        y:2022, s:'SUV đô thị',    min:450*M, max:720*M,  ic:'ti-car', img:'' },
+      { n:'Accord',      y:2023, s:'Sedan hạng D',  min:700*M, max:1000*M, ic:'ti-car', img:'' },
+      { n:'BR-V',        y:2023, s:'MPV 7 chỗ',     min:400*M, max:620*M,  ic:'ti-car', img:'' }
+    ]},
+    { b:'Hyundai', logo:'', m:[
+      { n:'Grand i10',  y:2022, s:'Hatchback hạng A', min:220*M, max:360*M,  ic:'ti-car', img:'' },
+      { n:'Accent',     y:2023, s:'Sedan hạng B',     min:300*M, max:490*M,  ic:'ti-car', img:'' },
+      { n:'Creta',      y:2022, s:'SUV đô thị',       min:400*M, max:620*M,  ic:'ti-car', img:'' },
+      { n:'Tucson',     y:2022, s:'SUV 5 chỗ',        min:500*M, max:800*M,  ic:'ti-car', img:'' },
+      { n:'SantaFe',    y:2023, s:'SUV 7 chỗ',        min:700*M, max:1050*M, ic:'ti-car', img:'' },
+      { n:'Stargazer',  y:2023, s:'MPV 7 chỗ',        min:350*M, max:560*M,  ic:'ti-car', img:'' }
+    ]},
+    { b:'Mazda', logo:'', m:[
+      { n:'Mazda2', y:2023, s:'Sedan hạng B', min:280*M, max:460*M, ic:'ti-car', img:'' },
+      { n:'Mazda3', y:2022, s:'Sedan hạng C', min:400*M, max:650*M, ic:'ti-car', img:'' },
+      { n:'Mazda6', y:2022, s:'Sedan hạng D', min:500*M, max:780*M, ic:'ti-car', img:'' },
+      { n:'CX-3',   y:2022, s:'SUV đô thị',   min:350*M, max:560*M, ic:'ti-car', img:'' },
+      { n:'CX-5',   y:2023, s:'SUV 5 chỗ',    min:500*M, max:800*M, ic:'ti-car', img:'' },
+      { n:'CX-8',   y:2022, s:'SUV 7 chỗ',    min:600*M, max:920*M, ic:'ti-car', img:'' }
+    ]},
+    { b:'Mitsubishi', logo:'', m:[
+      { n:'Attrage',    y:2022, s:'Sedan hạng B', min:250*M, max:420*M, ic:'ti-car',   img:'' },
+      { n:'Xpander',    y:2022, s:'MPV 7 chỗ',    min:350*M, max:560*M, ic:'ti-car',   img:'' },
+      { n:'Xforce',     y:2024, s:'SUV đô thị',   min:400*M, max:620*M, ic:'ti-car',   img:'' },
+      { n:'Outlander',  y:2022, s:'SUV 5 chỗ',    min:500*M, max:780*M, ic:'ti-car',   img:'' },
+      { n:'Triton',     y:2023, s:'Bán tải',      min:450*M, max:720*M, ic:'ti-truck', img:'' }
+    ]},
+    { b:'Ford', logo:'', m:[
+      { n:'Territory',       y:2022, s:'SUV 5 chỗ', min:500*M, max:780*M,  ic:'ti-car',   img:'' },
+      { n:'Ranger XLS',      y:2023, s:'Bán tải',   min:500*M, max:820*M,  ic:'ti-truck', img:'' },
+      { n:'Ranger Wildtrak', y:2023, s:'Bán tải',   min:650*M, max:980*M,  ic:'ti-truck', img:'' },
+      { n:'Everest',         y:2023, s:'SUV 7 chỗ', min:700*M, max:1100*M, ic:'ti-car',   img:'' },
+      { n:'Explorer',        y:2022, s:'SUV 7 chỗ', min:900*M, max:1400*M, ic:'ti-car',   img:'' }
+    ]},
+    { b:'Kia', logo:'', m:[
+      { n:'Morning',   y:2022, s:'Hatchback hạng A', min:200*M, max:340*M,  ic:'ti-car', img:'' },
+      { n:'Soluto',    y:2022, s:'Sedan hạng B',     min:250*M, max:420*M,  ic:'ti-car', img:'' },
+      { n:'K3',        y:2022, s:'Sedan hạng C',     min:350*M, max:560*M,  ic:'ti-car', img:'' },
+      { n:'Seltos',    y:2022, s:'SUV đô thị',       min:400*M, max:650*M,  ic:'ti-car', img:'' },
+      { n:'Sportage',  y:2023, s:'SUV 5 chỗ',        min:550*M, max:850*M,  ic:'ti-car', img:'' },
+      { n:'Carnival',  y:2022, s:'MPV cao cấp',      min:800*M, max:1250*M, ic:'ti-car', img:'' }
+    ]},
+    { b:'Isuzu', logo:'', m:[
+      { n:'D-Max', y:2022, s:'Bán tải',   min:400*M, max:650*M, ic:'ti-truck', img:'' },
+      { n:'Mu-X',  y:2022, s:'SUV 7 chỗ', min:550*M, max:850*M, ic:'ti-car',   img:'' }
+    ]},
+    { b:'VinFast', logo:'', m:[
+      { n:'Fadil',     y:2022, s:'Hatchback hạng A',   min:220*M, max:360*M,  ic:'ti-car', img:'' },
+      { n:'VF5 Plus',  y:2023, s:'SUV đô thị (điện)',  min:300*M, max:480*M,  ic:'ti-car', img:'' },
+      { n:'VF6',       y:2024, s:'SUV hạng B (điện)',  min:450*M, max:700*M,  ic:'ti-car', img:'' },
+      { n:'VF7',       y:2024, s:'SUV hạng C (điện)',  min:600*M, max:900*M,  ic:'ti-car', img:'' },
+      { n:'VF8',       y:2023, s:'SUV hạng D (điện)',  min:700*M, max:1050*M, ic:'ti-car', img:'' },
+      { n:'VF9',       y:2023, s:'SUV hạng E (điện)',  min:900*M, max:1400*M, ic:'ti-car', img:'' }
+    ]}
+  ],
+  xemay: [
+    { b:'Honda', logo:'', m:[
+      { n:'SH 160i',       y:2023, s:'Tay ga cao cấp',   min:50*M, max:95*M, ic:'ti-motorbike', img:'' },
+      { n:'SH Mode 125',   y:2023, s:'Tay ga',           min:40*M, max:75*M, ic:'ti-motorbike', img:'' },
+      { n:'Air Blade 160', y:2023, s:'Tay ga thể thao',  min:25*M, max:50*M, ic:'ti-motorbike', img:'' },
+      { n:'Vision 110',    y:2023, s:'Tay ga phổ thông', min:18*M, max:34*M, ic:'ti-motorbike', img:'' },
+      { n:'Lead 125',      y:2023, s:'Tay ga',           min:22*M, max:42*M, ic:'ti-motorbike', img:'' },
+      { n:'Vario 160',     y:2023, s:'Tay ga thể thao',  min:30*M, max:55*M, ic:'ti-motorbike', img:'' },
+      { n:'Winner X 150',  y:2023, s:'Xe côn tay',       min:22*M, max:42*M, ic:'ti-motorbike', img:'' }
+    ]},
+    { b:'Yamaha', logo:'', m:[
+      { n:'Exciter 155 VVA',    y:2023, s:'Xe côn tay',       min:25*M, max:46*M, ic:'ti-motorbike', img:'' },
+      { n:'NVX 155',            y:2023, s:'Tay ga thể thao',  min:28*M, max:52*M, ic:'ti-motorbike', img:'' },
+      { n:'Janus 125',          y:2023, s:'Tay ga',           min:18*M, max:34*M, ic:'ti-motorbike', img:'' },
+      { n:'Grande Hybrid 125',  y:2023, s:'Tay ga',           min:22*M, max:42*M, ic:'ti-motorbike', img:'' },
+      { n:'FreeGo 125',         y:2022, s:'Tay ga',           min:18*M, max:34*M, ic:'ti-motorbike', img:'' }
+    ]},
+    { b:'Piaggio', logo:'', m:[
+      { n:'Vespa Sprint 125',    y:2023, s:'Tay ga nhập khẩu', min:45*M, max:85*M,  ic:'ti-motorbike', img:'' },
+      { n:'Vespa Primavera 125', y:2023, s:'Tay ga nhập khẩu', min:45*M, max:85*M,  ic:'ti-motorbike', img:'' },
+      { n:'Vespa GTS 300',       y:2023, s:'Tay ga cao cấp',   min:70*M, max:130*M, ic:'ti-motorbike', img:'' },
+      { n:'Liberty 125',         y:2023, s:'Tay ga nhập khẩu', min:35*M, max:65*M,  ic:'ti-motorbike', img:'' },
+      { n:'Medley 150',          y:2023, s:'Tay ga',           min:55*M, max:100*M, ic:'ti-motorbike', img:'' }
+    ]},
+    { b:'SYM', logo:'', m:[
+      { n:'Attila V 125', y:2022, s:'Tay ga',           min:18*M, max:34*M, ic:'ti-motorbike', img:'' },
+      { n:'Galaxy 125',   y:2022, s:'Tay ga phổ thông', min:14*M, max:26*M, ic:'ti-motorbike', img:'' },
+      { n:'Elite 125',    y:2022, s:'Tay ga',           min:16*M, max:30*M, ic:'ti-motorbike', img:'' }
+    ]},
+    { b:'VinFast', logo:'', m:[
+      { n:'Klara S',  y:2023, s:'Xe máy điện', min:18*M, max:34*M, ic:'ti-motorbike', img:'' },
+      { n:'Theon S',  y:2023, s:'Xe máy điện', min:28*M, max:52*M, ic:'ti-motorbike', img:'' },
+      { n:'Vento S',  y:2023, s:'Xe máy điện', min:25*M, max:46*M, ic:'ti-motorbike', img:'' },
+      { n:'Feliz S',  y:2023, s:'Xe máy điện', min:16*M, max:30*M, ic:'ti-motorbike', img:'' },
+      { n:'Evo200',   y:2023, s:'Xe máy điện', min:12*M, max:24*M, ic:'ti-motorbike', img:'' }
+    ]}
+  ]
+};
+
+/* ===== Logo vẽ sẵn (để xem trước khi hãng chưa có logo riêng) ===== */
+var LOGOS = {
+  'Toyota':'<svg viewBox="0 0 48 48"><g fill="none" stroke="#EB0A1E" stroke-width="3.2"><ellipse cx="24" cy="24" rx="22" ry="14"/><ellipse cx="24" cy="19" rx="13" ry="6"/><ellipse cx="24" cy="27" rx="6" ry="10"/></g></svg>',
+  'Honda':'<svg viewBox="0 0 48 48"><rect x="6" y="14" width="36" height="20" rx="4" fill="none" stroke="#CC0000" stroke-width="3"/><path d="M16 19v10M16 24h16M32 19v10" fill="none" stroke="#CC0000" stroke-width="3.6" stroke-linecap="round"/></svg>',
+  'Hyundai':'<svg viewBox="0 0 48 48"><ellipse cx="24" cy="24" rx="22" ry="12.5" fill="none" stroke="#002C5F" stroke-width="2.6"/><text x="24" y="32" font-family="Arial" font-style="italic" font-weight="800" font-size="20" fill="#002C5F" text-anchor="middle">H</text></svg>',
+  'Mazda':'<svg viewBox="0 0 48 48"><ellipse cx="24" cy="24" rx="22" ry="12.5" fill="none" stroke="#1F3A5F" stroke-width="2.6"/><path d="M9 28c6-9 10-9 15-4 5-5 9-5 15 4-6-4-10-3-15 2-5-5-9-6-15-2z" fill="#1F3A5F"/></svg>',
+  'Mitsubishi':'<svg viewBox="0 0 48 48"><g fill="#E60012"><path d="M24 6 L30 16 L24 24 L18 16 Z"/><path d="M24 6 L30 16 L24 24 L18 16 Z" transform="rotate(120 24 24)"/><path d="M24 6 L30 16 L24 24 L18 16 Z" transform="rotate(240 24 24)"/></g></svg>',
+  'Ford':'<svg viewBox="0 0 48 48"><ellipse cx="24" cy="24" rx="23" ry="13" fill="#1C3D6E"/><text x="24" y="29" font-family="Georgia,serif" font-style="italic" font-weight="700" font-size="14" fill="#fff" text-anchor="middle">Ford</text></svg>',
+  'Kia':'<svg viewBox="0 0 48 48"><text x="24" y="31" font-family="Arial" font-weight="800" font-size="17" letter-spacing="-1" fill="#05141F" text-anchor="middle">KIA</text></svg>',
+  'Isuzu':'<svg viewBox="0 0 48 48"><text x="24" y="29" font-family="Arial" font-weight="800" font-size="12" fill="#DA251D" text-anchor="middle">ISUZU</text></svg>',
+  'VinFast':'<svg viewBox="0 0 48 48"><path d="M24 4 L42 10 V26 C42 36 34 42 24 45 C14 42 6 36 6 26 V10 Z" fill="#1E2952"/><text x="24" y="31" font-family="Arial" font-weight="800" font-size="18" fill="#fff" text-anchor="middle">V</text></svg>',
+  'Yamaha':'<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="none" stroke="#E2001A" stroke-width="3"/><g stroke="#E2001A" stroke-width="3" stroke-linecap="round" fill="none"><path d="M24 12 V36"/><path d="M14 33 L24 14 L34 33"/></g></svg>',
+  'Piaggio':'<svg viewBox="0 0 48 48"><path d="M24 4 L42 10 V26 C42 36 34 42 24 45 C14 42 6 36 6 26 V10 Z" fill="#003F87"/><text x="24" y="31" font-family="Arial" font-weight="800" font-size="18" fill="#fff" text-anchor="middle">P</text></svg>',
+  'SYM':'<svg viewBox="0 0 48 48"><text x="24" y="30" font-family="Arial" font-weight="800" font-size="15" fill="#0B4DA2" text-anchor="middle">SYM</text></svg>'
+};
+function svgLogo(b){ return LOGOS[b] || '<svg viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="10" fill="#E6F3EC"/><text x="24" y="31" font-family="Arial" font-weight="800" font-size="18" fill="#00844A" text-anchor="middle">'+(b.charAt(0)||'?')+'</text></svg>'; }
+function slug(s){ return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,''); }
+
+var $ = function(id){ return document.getElementById(id); };
+var DATA, type='oto', bi=0;
+var pendingImg=null; /* callback nhận dataURL ảnh đã chọn */
+
+/* ===== Nạp dữ liệu ===== */
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function load(){
+  try{ var s=localStorage.getItem('f88-xe-data'); if(s){ var d=JSON.parse(s); if(d&&d.oto&&d.xemay){ DATA=d; return; } } }catch(e){}
+  DATA = clone(DEFAULT_DATA);
+}
+var saveTimer=null;
+function save(){
+  try{ localStorage.setItem('f88-xe-data', JSON.stringify(DATA)); }
+  catch(e){ alert('Bộ nhớ trình duyệt đầy — ảnh quá lớn. Hãy dùng ảnh nhỏ hơn hoặc xóa bớt ảnh.'); return; }
+  var t=$('savedTag'); t.innerHTML='<i class="ti ti-check"></i> Đã lưu'; t.style.background='rgba(255,255,255,.16)';
+}
+function touch(){ /* gọi sau mỗi thay đổi */ clearTimeout(saveTimer); saveTimer=setTimeout(save,250);
+  var t=$('savedTag'); t.innerHTML='<i class="ti ti-dots"></i> Đang lưu...'; }
+
+/* ===== Ảnh ===== */
+function shrink(dataURL, maxW, cb){
+  var img=new Image();
+  img.onload=function(){
+    var sc=Math.min(1,maxW/img.width), w=Math.round(img.width*sc), h=Math.round(img.height*sc);
+    var c=document.createElement('canvas'); c.width=w; c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    cb(c.toDataURL('image/jpeg',0.82));
+  };
+  img.onerror=function(){ cb(dataURL); };
+  img.src=dataURL;
+}
+function shrinkPng(dataURL, maxW, cb){
+  var img=new Image();
+  img.onload=function(){
+    var sc=Math.min(1,maxW/img.width), w=Math.round(img.width*sc), h=Math.round(img.height*sc);
+    var c=document.createElement('canvas'); c.width=w; c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    cb(c.toDataURL('image/png'));
+  };
+  img.onerror=function(){ cb(dataURL); };
+  img.src=dataURL;
+}
+function pickImg(asPng, cb){ pendingImg={asPng:asPng,cb:cb}; $('fileImg').click(); }
+$('fileImg').onchange=function(){
+  var f=this.files&&this.files[0]; this.value=''; if(!f||!pendingImg) return;
+  var r=new FileReader();
+  r.onload=function(){
+    var fn=pendingImg.asPng?shrinkPng:shrink;
+    fn(r.result, pendingImg.asPng?240:820, function(out){ pendingImg.cb(out); pendingImg=null; });
+  };
+  r.readAsDataURL(f);
+};
+
+/* ===== Render danh sách hãng ===== */
+function brandLogoHTML(br){
+  if(br.logo) return '<img src="'+br.logo+'" alt="'+br.b+'" />';
+  return '<img src="f88-xe-assets/logos/'+slug(br.b).replace(/_/g,'')+'.png" alt="'+br.b+'" '
+       + 'onerror="this.onerror=null;this.insertAdjacentHTML(\'beforebegin\',svgLogo(this.alt));this.remove();" />';
+}
+function renderBrands(){
+  var arr=DATA[type], h='';
+  for(var i=0;i<arr.length;i++){
+    h+='<div class="brand-row'+(i===bi?' on':'')+'" data-i="'+i+'">'
+      +'<span class="lg">'+brandLogoHTML(arr[i])+'</span>'
+      +'<span class="nm">'+arr[i].b+'<small>'+arr[i].m.length+' xe</small></span>'
+      +'<button class="mini" data-act="up" data-i="'+i+'" title="Lên">▲</button>'
+      +'<button class="mini" data-act="down" data-i="'+i+'" title="Xuống">▼</button>'
+      +'<button class="mini" data-act="delb" data-i="'+i+'" title="Xóa hãng"><i class="ti ti-trash"></i></button>'
+      +'</div>';
+  }
+  $('brandList').innerHTML=h;
+  var rows=$('brandList').querySelectorAll('.brand-row');
+  rows.forEach(function(r){
+    r.onclick=function(){ bi=+this.getAttribute('data-i'); renderBrands(); renderEditor(); };
+  });
+  $('brandList').querySelectorAll('.mini').forEach(function(b){
+    b.onclick=function(ev){
+      ev.stopPropagation();
+      var i=+this.getAttribute('data-i'), act=this.getAttribute('data-act'), arr=DATA[type];
+      if(act==='up'&&i>0){ var t=arr[i-1]; arr[i-1]=arr[i]; arr[i]=t; bi=i-1; }
+      else if(act==='down'&&i<arr.length-1){ var t2=arr[i+1]; arr[i+1]=arr[i]; arr[i]=t2; bi=i+1; }
+      else if(act==='delb'){
+        if(!confirm('Xóa hãng "'+arr[i].b+'" cùng toàn bộ xe của hãng?')) return;
+        arr.splice(i,1); if(bi>=arr.length) bi=Math.max(0,arr.length-1);
+      }
+      touch(); renderBrands(); renderEditor();
+    };
+  });
+}
+
+/* ===== Render trình sửa xe ===== */
+var ICONS_OTO=[['ti-car','Ô tô / SUV'],['ti-truck','Bán tải / tải']];
+var ICONS_XE=[['ti-motorbike','Xe máy']];
+function iconOptions(cur){
+  var list=(type==='oto')?ICONS_OTO:ICONS_XE; var h='';
+  var found=false;
+  for(var i=0;i<list.length;i++){ var sel=(list[i][0]===cur)?' selected':''; if(sel) found=true; h+='<option value="'+list[i][0]+'"'+sel+'>'+list[i][1]+'</option>'; }
+  if(!found) h='<option value="'+cur+'" selected>'+cur+'</option>'+h;
+  return h;
+}
+function carThumbHTML(v){
+  var src = v.img || ('f88-xe-assets/cars/'+slug(type+'_'+DATA[type][bi].b+'_'+v.n)+'.jpg');
+  return '<img src="'+src+'" alt="" onerror="this.onerror=null;this.parentNode.querySelector(\'.ico\').style.display=\'block\';this.remove();" />'
+       + '<i class="ti '+v.ic+' ico" style="display:none"></i>';
+}
+function renderEditor(){
+  var arr=DATA[type];
+  if(!arr.length){ $('editor').innerHTML='<div class="empty">Chưa có hãng nào. Bấm “Thêm hãng” bên trái.</div>'; return; }
+  var br=arr[bi];
+  var h='';
+  h+='<div class="bhead">'
+    +'<div class="biglogo" id="brandLogoBox" title="Bấm để đổi logo hãng">'+brandLogoHTML(br)+'<span class="ov"><i class="ti ti-camera"></i></span></div>'
+    +'<div class="bname"><label>Tên hãng</label><input id="brandName" value="'+(br.b||'').replace(/"/g,'&quot;')+'" /></div>'
+    +'<button class="btn danger sm" id="delBrand"><i class="ti ti-trash"></i> Xóa hãng</button>'
+    +'</div>';
+  h+='<div class="cars">';
+  for(var i=0;i<br.m.length;i++){
+    var v=br.m[i];
+    h+='<div class="ccard" data-mi="'+i+'">'
+      +'<div class="top">'
+      +  '<div class="thumb" data-act="img" data-mi="'+i+'">'+carThumbHTML(v)+'<span class="ov"><i class="ti ti-camera"></i> Ảnh</span></div>'
+      +  '<div class="fields">'
+      +    '<div class="fld"><label>Tên xe</label><input data-mi="'+i+'" data-k="n" value="'+(v.n||'').replace(/"/g,'&quot;')+'" /></div>'
+      +    '<div class="fld"><label>Phân loại</label><input data-mi="'+i+'" data-k="s" value="'+(v.s||'').replace(/"/g,'&quot;')+'" /></div>'
+      +  '</div>'
+      +'</div>'
+      +'<div class="row3">'
+      +  '<div class="fld"><label>Đời xe</label><input type="number" data-mi="'+i+'" data-k="y" value="'+(v.y||'')+'" /></div>'
+      +  '<div class="fld"><label>Vay từ (triệu)</label><input type="number" data-mi="'+i+'" data-k="min" value="'+Math.round((v.min||0)/M)+'" /></div>'
+      +  '<div class="fld"><label>Vay đến (triệu)</label><input type="number" data-mi="'+i+'" data-k="max" value="'+Math.round((v.max||0)/M)+'" /></div>'
+      +'</div>'
+      +'<div class="row3" style="padding-top:0">'
+      +  '<div class="fld" style="grid-column:1/3"><label>Biểu tượng (khi chưa có ảnh)</label><select data-mi="'+i+'" data-k="ic">'+iconOptions(v.ic)+'</select></div>'
+      +  '<div class="fld" style="justify-content:flex-end"><label>&nbsp;</label>'
+      +    (v.img?'<button class="btn danger sm" data-act="delimg" data-mi="'+i+'"><i class="ti ti-photo-off"></i> Xóa ảnh</button>':'<span class="hint">Dùng ảnh tự động</span>')
+      +  '</div>'
+      +'</div>'
+      +'<div class="foot">'
+      +  '<button class="mini" data-act="cup" data-mi="'+i+'" title="Lên">▲</button>'
+      +  '<button class="mini" data-act="cdown" data-mi="'+i+'" title="Xuống">▼</button>'
+      +  '<span class="nm-line">'+br.b+' '+v.n+'</span>'
+      +  '<button class="btn danger sm" data-act="delcar" data-mi="'+i+'"><i class="ti ti-trash"></i> Xóa xe</button>'
+      +'</div>'
+      +'</div>';
+  }
+  h+='<div class="addcar" id="addCar"><i class="ti ti-plus"></i> Thêm xe mới</div>';
+  h+='</div>';
+  $('editor').innerHTML=h;
+  bindEditor();
+}
+
+function bindEditor(){
+  var br=DATA[type][bi];
+  /* Tên hãng */
+  $('brandName').oninput=function(){ br.b=this.value; touch(); var row=$('brandList').querySelector('.brand-row.on .nm'); if(row) row.firstChild.textContent=this.value; };
+  /* Logo hãng */
+  $('brandLogoBox').onclick=function(){ pickImg(true,function(out){ br.logo=out; touch(); renderBrands(); renderEditor(); }); };
+  $('delBrand').onclick=function(){
+    if(!confirm('Xóa hãng "'+br.b+'" cùng toàn bộ xe?')) return;
+    DATA[type].splice(bi,1); if(bi>=DATA[type].length) bi=Math.max(0,DATA[type].length-1);
+    touch(); renderBrands(); renderEditor();
+  };
+  /* Các trường input của xe */
+  $('editor').querySelectorAll('input[data-k],select[data-k]').forEach(function(el){
+    el.oninput=function(){
+      var mi=+this.getAttribute('data-mi'), k=this.getAttribute('data-k'), v=br.m[mi];
+      if(k==='min'||k==='max') v[k]=(parseFloat(this.value)||0)*M;
+      else if(k==='y') v[k]=parseInt(this.value)||'';
+      else v[k]=this.value;
+      touch();
+    };
+  });
+  /* Ảnh xe + nút thao tác */
+  $('editor').querySelectorAll('[data-act]').forEach(function(el){
+    el.onclick=function(ev){
+      ev.stopPropagation();
+      var act=this.getAttribute('data-act'), mi=+this.getAttribute('data-mi'), m=br.m;
+      if(act==='img'){ pickImg(false,function(out){ m[mi].img=out; touch(); renderEditor(); }); }
+      else if(act==='delimg'){ m[mi].img=''; touch(); renderEditor(); }
+      else if(act==='delcar'){ if(confirm('Xóa xe "'+m[mi].n+'"?')){ m.splice(mi,1); touch(); renderBrands(); renderEditor(); } }
+      else if(act==='cup'&&mi>0){ var t=m[mi-1]; m[mi-1]=m[mi]; m[mi]=t; touch(); renderEditor(); }
+      else if(act==='cdown'&&mi<m.length-1){ var t2=m[mi+1]; m[mi+1]=m[mi]; m[mi]=t2; touch(); renderEditor(); }
+    };
+  });
+  /* Thêm xe */
+  $('addCar').onclick=function(){
+    br.m.push({ n:'Xe mới', y:2024, s:'', min:100*M, max:200*M, ic:(type==='oto'?'ti-car':'ti-motorbike'), img:'' });
+    touch(); renderBrands(); renderEditor();
+    var cards=$('editor').querySelectorAll('.ccard'); if(cards.length) cards[cards.length-1].scrollIntoView({behavior:'smooth',block:'center'});
+  };
+}
+
+/* ===== Thanh công cụ ===== */
+document.querySelectorAll('.seg').forEach(function(s){
+  s.onclick=function(){
+    type=this.getAttribute('data-type'); bi=0;
+    document.querySelectorAll('.seg').forEach(function(x){x.classList.remove('on')});
+    this.classList.add('on'); renderBrands(); renderEditor();
+  };
+});
+$('addBrand').onclick=function(){
+  var name=prompt('Tên hãng mới:'); if(!name) return;
+  DATA[type].push({ b:name.trim(), logo:'', m:[] }); bi=DATA[type].length-1;
+  touch(); renderBrands(); renderEditor();
+};
+$('exportBtn').onclick=function(){
+  save();
+  var blob=new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='f88-xe-data.json';
+  document.body.appendChild(a); a.click(); a.remove();
+};
+$('importBtn').onclick=function(){ $('fileJson').click(); };
+$('fileJson').onchange=function(){
+  var f=this.files&&this.files[0]; this.value=''; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{ var d=JSON.parse(r.result);
+      if(!d.oto||!d.xemay){ alert('File không đúng định dạng (thiếu oto/xemay).'); return; }
+      DATA=d; bi=0; save(); renderBrands(); renderEditor(); alert('Đã nhập dữ liệu từ file.');
+    }catch(e){ alert('Không đọc được file JSON.'); }
+  };
+  r.readAsText(f);
+};
+$('resetBtn').onclick=function(){
+  if(!confirm('Khôi phục về danh sách xe mặc định? Mọi chỉnh sửa hiện tại sẽ mất.')) return;
+  DATA=clone(DEFAULT_DATA); bi=0; save(); renderBrands(); renderEditor();
+};
+$('openSite').onclick=function(){ save(); window.open('index.html','_blank'); };
+
+/* ===== Khởi tạo ===== */
+load(); renderBrands(); renderEditor();
+</script>
+</body>
+</html>
