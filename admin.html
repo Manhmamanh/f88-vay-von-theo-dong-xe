@@ -139,6 +139,27 @@
   .st.lienhe{background:#cfe6ff;color:#0a4a8a}
   .st.xong{background:var(--green-bg);color:var(--green-d)}
   .lead select{padding:7px 9px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px}
+
+  /* ===== Bảng khách đăng ký ===== */
+  .tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  table.leads{border-collapse:collapse;width:100%;min-width:900px;font-size:13px}
+  table.leads th,table.leads td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+  table.leads thead th{background:var(--green-bg);color:var(--green-d);font-weight:800;white-space:nowrap}
+  table.leads tr.filters th{background:#fff;padding:6px 8px}
+  table.leads tr.filters input,table.leads tr.filters select{width:100%;min-width:80px;border:1.5px solid var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:12px;font-weight:500;outline:none}
+  table.leads tr.filters input:focus,table.leads tr.filters select:focus{border-color:var(--green)}
+  table.leads tbody tr:hover{background:#f7faf8}
+  table.leads td .nm{font-weight:800}
+  table.leads td .ph{font-weight:700;color:var(--green-d);text-decoration:none}
+  table.leads td.tm{color:var(--gray);white-space:nowrap;font-size:12px}
+  table.leads .stsel{padding:5px 7px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:12px;font-weight:700}
+  table.leads .stsel.moi{background:#fde8c8;color:#9a6b00}
+  table.leads .stsel.lienhe{background:#cfe6ff;color:#0a4a8a}
+  table.leads .stsel.xong{background:var(--green-bg);color:var(--green-d)}
+  .iconbtn{border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:6px 9px;cursor:pointer;font-size:14px;color:var(--ink);display:inline-flex;align-items:center;gap:4px}
+  .iconbtn:hover{border-color:var(--green-l)}
+  .iconbtn.del:hover{border-color:#eab;color:var(--red)}
+  .iconbtn.ok{background:var(--green);color:#fff;border-color:var(--green)}
 </style>
 </head>
 <body>
@@ -206,12 +227,7 @@
       <div class="leadbar">
         <h2 style="margin:0">Khách đăng ký vay</h2>
         <div class="spacer"></div>
-        <select id="leadFilter">
-          <option value="all">Tất cả</option>
-          <option value="moi">Mới</option>
-          <option value="lienhe">Đã liên hệ</option>
-          <option value="xong">Hoàn tất</option>
-        </select>
+        <button class="btn light sm" id="leadClear"><i class="ti ti-filter-off"></i> Xóa lọc</button>
         <button class="btn light sm" id="leadCsv"><i class="ti ti-download"></i> Tải Excel (CSV)</button>
         <button class="btn light sm" id="leadReload"><i class="ti ti-refresh"></i> Tải lại</button>
       </div>
@@ -666,7 +682,10 @@ function renderContent(){
   h+='</div><button class="btn light sm" id="addBen" style="margin-top:4px"><i class="ti ti-plus"></i> Thêm quyền lợi</button>'
    +'<div class="sechead">Chân trang (footer)</div>'
    +'<div class="frow"><label>Hotline</label><input id="c-hot" value="'+(SITE.hotline||'').replace(/"/g,'&quot;')+'" /></div>'
-   +'<div class="frow"><label>Dòng chữ footer</label><textarea id="c-foot" rows="2">'+(SITE.footer||'')+'</textarea></div>';
+   +'<div class="frow"><label>Dòng chữ footer</label><textarea id="c-foot" rows="2">'+(SITE.footer||'')+'</textarea></div>'
+   +'<div class="sechead">Thông báo email khi có khách đăng ký mới</div>'
+   +'<div class="frow"><label>URL Webhook (Google Apps Script)</label><input id="c-notify" placeholder="https://script.google.com/macros/s/.../exec" value="'+(SITE.notifyUrl||'').replace(/"/g,'&quot;')+'" /></div>'
+   +'<div class="hint">Dán link Web App lấy từ Google Apps Script vào đây để nhận email mỗi khi có khách đăng ký. Xem hướng dẫn 5 bước trong file <b>f88-email-apps-script.gs</b>. Để trống = không gửi email.</div>';
   $('contentForm').innerHTML=h;
   // bind
   $('c-title').oninput=function(){ SITE.title=this.value; touchSite(); };
@@ -675,6 +694,7 @@ function renderContent(){
   $('c-rv').oninput=function(){ SITE.rateValue=this.value; touchSite(); };
   $('c-hot').oninput=function(){ SITE.hotline=this.value; touchSite(); };
   $('c-foot').oninput=function(){ SITE.footer=this.value; touchSite(); };
+  $('c-notify').oninput=function(){ SITE.notifyUrl=this.value.trim(); touchSite(); };
   $('contentForm').querySelectorAll('input[data-bi]').forEach(function(el){ el.oninput=function(){ SITE.benefits[+this.getAttribute('data-bi')].txt=this.value; touchSite(); }; });
   $('contentForm').querySelectorAll('.benrow select.ic').forEach(function(el){ el.onchange=function(){ var i=+this.parentNode.getAttribute('data-i'); SITE.benefits[i].ic=this.value; touchSite(); renderContent(); }; });
   $('contentForm').querySelectorAll('[data-delben]').forEach(function(el){ el.onclick=function(){ SITE.benefits.splice(+this.getAttribute('data-delben'),1); touchSite(); renderContent(); }; });
@@ -686,47 +706,90 @@ function renderContent(){
    =================================================================== */
 var LEADS=[];
 var STLABEL={moi:'Mới', lienhe:'Đã liên hệ', xong:'Hoàn tất'};
+var LF={name:'',phone:'',ward:'',city:'',car:'',status:'all'}; /* bộ lọc theo cột */
 function fmtTime(ts){ try{ var d=ts&&ts.toDate?ts.toDate():null; if(!d) return ''; return d.toLocaleString('vi-VN'); }catch(e){ return ''; } }
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function leadText(l){
+  return 'Họ tên: '+(l.name||'')
+    +'\nSĐT: '+(l.phone||'')
+    +'\nĐịa chỉ: '+[l.ward,l.city].filter(Boolean).join(', ')
+    +'\nXe quan tâm: '+(l.brand||'')+' '+(l.car||'')+(l.year?(' (đời '+l.year+')'):'')
+    +'\nThời gian: '+fmtTime(l.createdAt);
+}
+function copyText(txt, btn){
+  function ok(){ if(btn){ var old=btn.innerHTML; btn.classList.add('ok'); btn.innerHTML='<i class="ti ti-check"></i> Đã copy'; setTimeout(function(){ btn.classList.remove('ok'); btn.innerHTML=old; },1200); } }
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(ok).catch(function(){fallback();}); }
+  else fallback();
+  function fallback(){ var t=document.createElement('textarea'); t.value=txt; document.body.appendChild(t); t.select(); try{document.execCommand('copy');}catch(e){} t.remove(); ok(); }
+}
 function loadLeads(){
   $('leadList').innerHTML='<div class="empty" style="padding:30px">Đang tải...</div>';
-  fbLeads.orderBy('createdAt','desc').limit(500).get().then(function(qs){
+  fbLeads.orderBy('createdAt','desc').limit(800).get().then(function(qs){
     LEADS=[]; qs.forEach(function(doc){ LEADS.push(Object.assign({id:doc.id}, doc.data())); });
-    renderLeads();
+    buildLeadTable(); renderBody();
   }).catch(function(e){ $('leadList').innerHTML='<div class="empty" style="padding:30px">Lỗi tải danh sách: '+(e&&e.message||e)+'</div>'; });
 }
-function renderLeads(){
-  var f=$('leadFilter').value;
-  var list=LEADS.filter(function(l){ return f==='all' || (l.status||'moi')===f; });
+function buildLeadTable(){
+  var h='<div class="tblwrap"><table class="leads"><thead>'
+    +'<tr><th>Họ tên</th><th>SĐT</th><th>Phường/Xã</th><th>Tỉnh/TP</th><th>Xe quan tâm</th><th>Đời</th><th>Trạng thái</th><th>Thời gian</th><th>Sao chép</th><th>Xóa</th></tr>'
+    +'<tr class="filters">'
+    +'<th><input data-f="name" placeholder="Lọc tên..." value="'+esc(LF.name)+'"></th>'
+    +'<th><input data-f="phone" placeholder="Lọc SĐT..." value="'+esc(LF.phone)+'"></th>'
+    +'<th><input data-f="ward" placeholder="Lọc P/X..." value="'+esc(LF.ward)+'"></th>'
+    +'<th><input data-f="city" placeholder="Lọc tỉnh..." value="'+esc(LF.city)+'"></th>'
+    +'<th><input data-f="car" placeholder="Lọc xe..." value="'+esc(LF.car)+'"></th>'
+    +'<th></th>'
+    +'<th><select data-f="status"><option value="all">Tất cả</option><option value="moi">Mới</option><option value="lienhe">Đã liên hệ</option><option value="xong">Hoàn tất</option></select></th>'
+    +'<th></th><th></th><th></th>'
+    +'</tr></thead><tbody id="leadBody"></tbody></table></div>';
+  $('leadList').innerHTML=h;
+  var stSel=$('leadList').querySelector('select[data-f="status"]'); if(stSel) stSel.value=LF.status;
+  $('leadList').querySelectorAll('.filters input[data-f]').forEach(function(el){ el.oninput=function(){ LF[this.getAttribute('data-f')]=this.value.trim().toLowerCase(); renderBody(); }; });
+  if(stSel) stSel.onchange=function(){ LF.status=this.value; renderBody(); };
+}
+function passFilter(l){
+  function has(field,key){ return !LF[key] || String(l[field]||'').toLowerCase().indexOf(LF[key])>=0; }
+  return has('name','name') && has('phone','phone') && has('ward','ward') && has('city','city')
+      && (!LF.car || ((String(l.brand||'')+' '+String(l.car||'')).toLowerCase().indexOf(LF.car)>=0))
+      && (LF.status==='all' || (l.status||'moi')===LF.status);
+}
+function renderBody(){
   $('leadCount').textContent = LEADS.length ? LEADS.length : '';
-  if(!list.length){ $('leadList').innerHTML='<div class="empty" style="padding:40px"><i class="ti ti-inbox" style="font-size:36px;display:block;color:var(--green-l)"></i>Chưa có khách đăng ký'+(f!=='all'?' ở trạng thái này':'')+'.</div>'; return; }
+  var body=$('leadBody'); if(!body) return;
+  var list=LEADS.filter(passFilter);
+  if(!list.length){ body.innerHTML='<tr><td colspan="10" style="text-align:center;padding:34px;color:var(--gray)"><i class="ti ti-inbox" style="font-size:32px;display:block;color:var(--green-l)"></i>'+(LEADS.length?'Không có khách khớp bộ lọc.':'Chưa có khách đăng ký.')+'</td></tr>'; return; }
   var h='';
   for(var i=0;i<list.length;i++){
     var l=list[i], st=l.status||'moi';
-    h+='<div class="lead">'
-      +'<div class="who"><span class="nm">'+(l.name||'')+'</span> · <a class="ph" href="tel:'+(l.phone||'').replace(/\s/g,'')+'">'+(l.phone||'')+'</a>'
-      +'<div class="meta"><i class="ti ti-car"></i> '+(l.brand||'')+' '+(l.car||'')+(l.year?(' · đời '+l.year):'')+'</div>'
-      +'<div class="meta"><i class="ti ti-map-pin"></i> '+[l.ward,l.city].filter(Boolean).join(', ')+' · '+fmtTime(l.createdAt)+'</div></div>'
-      +'<span class="st '+st+'">'+(STLABEL[st]||st)+'</span>'
-      +'<select data-st="'+l.id+'">'
+    h+='<tr>'
+      +'<td><span class="nm">'+esc(l.name)+'</span></td>'
+      +'<td><a class="ph" href="tel:'+esc((l.phone||'').replace(/\s/g,''))+'">'+esc(l.phone)+'</a></td>'
+      +'<td>'+esc(l.ward)+'</td>'
+      +'<td>'+esc(l.city)+'</td>'
+      +'<td>'+esc((l.brand||'')+' '+(l.car||''))+'</td>'
+      +'<td>'+esc(l.year)+'</td>'
+      +'<td><select class="stsel '+st+'" data-st="'+l.id+'">'
         +'<option value="moi"'+(st==='moi'?' selected':'')+'>Mới</option>'
         +'<option value="lienhe"'+(st==='lienhe'?' selected':'')+'>Đã liên hệ</option>'
-        +'<option value="xong"'+(st==='xong'?' selected':'')+'>Hoàn tất</option>'
-      +'</select>'
-      +'<button class="btn danger sm" data-dellead="'+l.id+'"><i class="ti ti-trash"></i></button>'
-      +'</div>';
+        +'<option value="xong"'+(st==='xong'?' selected':'')+'>Hoàn tất</option></select></td>'
+      +'<td class="tm">'+esc(fmtTime(l.createdAt))+'</td>'
+      +'<td><button class="iconbtn" data-copy="'+i+'" title="Copy thông tin khách"><i class="ti ti-copy"></i></button></td>'
+      +'<td><button class="iconbtn del" data-dellead="'+l.id+'" title="Xóa"><i class="ti ti-trash"></i></button></td>'
+      +'</tr>';
   }
-  $('leadList').innerHTML=h;
-  $('leadList').querySelectorAll('select[data-st]').forEach(function(el){ el.onchange=function(){
+  body.innerHTML=h;
+  body.querySelectorAll('select[data-st]').forEach(function(el){ el.onchange=function(){
     var id=this.getAttribute('data-st'), v=this.value;
-    fbLeads.doc(id).update({status:v}).then(function(){ var it=LEADS.filter(function(x){return x.id===id;})[0]; if(it) it.status=v; renderLeads(); });
+    fbLeads.doc(id).update({status:v}).then(function(){ var it=LEADS.filter(function(x){return x.id===id;})[0]; if(it) it.status=v; renderBody(); });
   };});
-  $('leadList').querySelectorAll('[data-dellead]').forEach(function(el){ el.onclick=function(){
+  body.querySelectorAll('[data-copy]').forEach(function(el){ el.onclick=function(){ copyText(leadText(list[+this.getAttribute('data-copy')]), this); }; });
+  body.querySelectorAll('[data-dellead]').forEach(function(el){ el.onclick=function(){
     var id=this.getAttribute('data-dellead');
     if(!confirm('Xóa đăng ký này?')) return;
-    fbLeads.doc(id).delete().then(function(){ LEADS=LEADS.filter(function(x){return x.id!==id;}); renderLeads(); });
+    fbLeads.doc(id).delete().then(function(){ LEADS=LEADS.filter(function(x){return x.id!==id;}); renderBody(); });
   };});
 }
-$('leadFilter').onchange=renderLeads;
+$('leadClear').onclick=function(){ LF={name:'',phone:'',ward:'',city:'',car:'',status:'all'}; buildLeadTable(); renderBody(); };
 $('leadReload').onclick=loadLeads;
 $('leadCsv').onclick=function(){
   if(!LEADS.length){ alert('Chưa có dữ liệu.'); return; }

@@ -486,12 +486,16 @@ function openModal(brand, name, yr){
         + '<p style="color:var(--gray);font-size:14px;margin:0">F88 sẽ liên hệ với bạn trong ít phút để tư vấn khoản vay cho <b>'+brand+' '+name+'</b>.</p></div>';
     }
     function fail(){ btn.disabled=false; btn.textContent='Gửi đăng ký'; alert('Gửi đăng ký lỗi, vui lòng kiểm tra mạng và thử lại, hoặc gọi hotline.'); }
+    var lead = { name:nm, phone:ph, city:ct, ward:wd, brand:brand, car:name, year:yr };
+    /* Gửi email thông báo (nếu admin đã cấu hình webhook) — gửi ngầm, không chặn */
+    function notify(){
+      if(!notifyUrl) return;
+      try{ fetch(notifyUrl, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(lead) }); }catch(e){}
+    }
     /* Lưu thông tin khách vào Firestore (collection "leads") để admin quản lý */
     try{
-      firebase.firestore().collection('leads').add({
-        name:nm, phone:ph, city:ct, ward:wd, brand:brand, car:name, year:yr, status:'moi',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).then(done).catch(fail);
+      firebase.firestore().collection('leads').add(Object.assign({status:'moi', createdAt: firebase.firestore.FieldValue.serverTimestamp()}, lead))
+        .then(function(){ notify(); done(); }).catch(fail);
     }catch(e){ fail(); }
   };
 }
@@ -521,9 +525,11 @@ function boot(){ if(bi >= DATA[type].length) bi = 0; renderBrands(); renderPanel
 function applyData(d){ if(d && d.oto && d.xemay){ DATA = d; } }
 
 /* ===== Nội dung trang (header/quyền lợi/footer) — admin chỉnh được ===== */
+var notifyUrl = '';
 function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function applySite(s){
   if(!s) return;
+  notifyUrl = s.notifyUrl || '';
   if(s.title){ $('siteTitle').textContent = s.title; document.title = 'F88 — '+s.title; }
   if(s.sub) $('siteSub').textContent = s.sub;
   if(s.rateLabel || s.rateValue) $('siteRate').innerHTML = esc(s.rateLabel||'')+'<b>'+esc(s.rateValue||'')+'</b>';
