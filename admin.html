@@ -94,9 +94,34 @@
   .empty{padding:40px;text-align:center;color:var(--gray);font-weight:600}
   .hint{font-size:11.5px;color:var(--gray);margin-top:4px}
   input[type=file]{display:none}
+
+  /* ===== Cổng đăng nhập ===== */
+  .login{position:fixed;inset:0;z-index:100;background:linear-gradient(135deg,var(--green),var(--green-d));display:flex;align-items:center;justify-content:center;padding:20px}
+  .login.hidden{display:none}
+  .login .box{background:#fff;border-radius:20px;padding:30px 26px;max-width:360px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.35);text-align:center}
+  .login .box .logo88{display:inline-block;background:var(--green);color:#fff;font-weight:800;font-size:24px;padding:6px 14px;border-radius:11px;margin-bottom:14px}
+  .login .box h2{margin:0 0 4px;font-size:19px;font-weight:800;color:var(--ink)}
+  .login .box p{margin:0 0 18px;font-size:13px;color:var(--gray)}
+  .login input{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:11px;font-family:inherit;font-size:15px;outline:none;text-align:center}
+  .login input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+  .login .err{color:var(--red);font-size:12.5px;font-weight:600;min-height:18px;margin:8px 0}
+  .login button{width:100%;border:none;border-radius:12px;background:var(--gold);color:var(--ink);font-family:inherit;font-weight:800;font-size:15px;padding:13px;cursor:pointer}
+  .login button:hover{background:#ffcf1f}
 </style>
 </head>
 <body>
+
+<!-- CỔNG ĐĂNG NHẬP -->
+<div class="login" id="login">
+  <div class="box">
+    <div class="logo88">F88</div>
+    <h2>Đăng nhập quản trị</h2>
+    <p>Nhập mật khẩu để vào trang quản lý dữ liệu xe</p>
+    <input id="pw" type="password" placeholder="Mật khẩu" autocomplete="current-password" />
+    <div class="err" id="loginErr"></div>
+    <button id="loginBtn">Đăng nhập</button>
+  </div>
+</div>
 
 <div class="bar">
   <div class="logo88">F88</div>
@@ -107,6 +132,8 @@
   <button class="btn ghost" id="importBtn"><i class="ti ti-upload"></i> Nhập file</button>
   <button class="btn ghost" id="resetBtn"><i class="ti ti-rotate"></i> Khôi phục mặc định</button>
   <button class="btn gold" id="exportBtn"><i class="ti ti-download"></i> Tải file dữ liệu (.json)</button>
+  <button class="btn ghost" id="changePwBtn"><i class="ti ti-key"></i> Đổi mật khẩu</button>
+  <button class="btn ghost" id="logoutBtn"><i class="ti ti-logout"></i> Đăng xuất</button>
 </div>
 
 <div class="guide">
@@ -136,6 +163,40 @@
 <input type="file" id="fileJson" accept="application/json,.json" />
 
 <script>
+/* =====================================================================
+   BẢO MẬT ĐĂNG NHẬP (lớp chặn cơ bản cho web tĩnh)
+   - Mật khẩu KHÔNG lưu dạng chữ trần, chỉ lưu mã băm SHA-256.
+   - Đổi mật khẩu: bấm nút "Đổi mật khẩu" — trang sẽ tạo file admin.html
+     mới với mã băm mới để bạn tải lên thay thế.
+   ===================================================================== */
+var ADMIN_HASH = 'e00413b4a77024f5f3f57901588ea7e1a356c707f2196269bb4d922c1a010927'; /*ADMIN_HASH*/
+
+/* SHA-256 thuần JS (chạy được cả khi mở bằng file://) */
+function sha256(ascii){
+  function rr(v,a){ return (v>>>a)|(v<<(32-a)); }
+  var mp=Math.pow, maxW=mp(2,32), res='', i,j;
+  var words=[], bitLen=ascii.length*8;
+  var hash=sha256.h=sha256.h||[], k=sha256.k=sha256.k||[], pc=k.length, comp={};
+  for(var c=2; pc<64; c++){ if(!comp[c]){ for(i=0;i<313;i+=c) comp[i]=c; hash[pc]=(mp(c,.5)*maxW)|0; k[pc++]=(mp(c,1/3)*maxW)|0; } }
+  ascii+='\x80'; while(ascii.length%64-56) ascii+='\x00';
+  for(i=0;i<ascii.length;i++){ j=ascii.charCodeAt(i); if(j>>8) return; words[i>>2]|=j<<((3-i)%4*8); }
+  words[words.length]=(bitLen/maxW)|0; words[words.length]=bitLen;
+  for(j=0;j<words.length;){
+    var w=words.slice(j,j+=16), oh=hash; hash=hash.slice(0,8);
+    for(i=0;i<64;i++){
+      var w15=w[i-15], w2=w[i-2], a=hash[0], e=hash[4];
+      var t1=hash[7]+(rr(e,6)^rr(e,11)^rr(e,25))+((e&hash[5])^(~e&hash[6]))+k[i]
+            +(w[i]=(i<16)?w[i]:(w[i-16]+(rr(w15,7)^rr(w15,18)^(w15>>>3))+w[i-7]+(rr(w2,17)^rr(w2,19)^(w2>>>10)))|0);
+      var t2=(rr(a,2)^rr(a,13)^rr(a,22))+((a&hash[1])^(a&hash[2])^(hash[1]&hash[2]));
+      hash=[(t1+t2)|0].concat(hash); hash[4]=(hash[4]+t1)|0;
+    }
+    for(i=0;i<8;i++) hash[i]=(hash[i]+oh[i])|0;
+  }
+  for(i=0;i<8;i++){ for(j=3;j+1;j--){ var b=(hash[i]>>(j*8))&255; res+=((b<16)?0:'')+b.toString(16); } }
+  return res;
+}
+function hashPw(pw){ return sha256(unescape(encodeURIComponent(pw))); }
+
 var M = 1000000;
 
 /* ===== Dữ liệu mặc định (giống hệt trang web) ===== */
@@ -494,6 +555,39 @@ $('resetBtn').onclick=function(){
   DATA=clone(DEFAULT_DATA); bi=0; save(); renderBrands(); renderEditor();
 };
 $('openSite').onclick=function(){ save(); window.open('index.html','_blank'); };
+
+/* ===== Đăng nhập / Đăng xuất / Đổi mật khẩu ===== */
+function unlock(){ $('login').classList.add('hidden'); }
+function doLogin(){
+  var v=$('pw').value||'';
+  if(hashPw(v)===ADMIN_HASH){ try{ sessionStorage.setItem('f88-admin-ok','1'); }catch(e){} $('pw').value=''; $('loginErr').textContent=''; unlock(); }
+  else { $('loginErr').textContent='Sai mật khẩu. Vui lòng thử lại.'; $('pw').value=''; $('pw').focus(); }
+}
+$('loginBtn').onclick=doLogin;
+$('pw').addEventListener('keydown',function(e){ if(e.key==='Enter') doLogin(); });
+try{ if(sessionStorage.getItem('f88-admin-ok')==='1') unlock(); else $('pw').focus(); }catch(e){ $('pw').focus(); }
+
+$('logoutBtn').onclick=function(){
+  try{ sessionStorage.removeItem('f88-admin-ok'); }catch(e){}
+  location.reload();
+};
+$('changePwBtn').onclick=function(){
+  var np=prompt('Nhập MẬT KHẨU MỚI (nên ≥ 10 ký tự, có chữ hoa, số, ký tự đặc biệt):');
+  if(np===null) return;
+  if(np.length<6){ alert('Mật khẩu quá ngắn (tối thiểu 6 ký tự).'); return; }
+  if(prompt('Nhập lại mật khẩu mới để xác nhận:')!==np){ alert('Hai lần nhập không khớp.'); return; }
+  var nh=hashPw(np);
+  fetch('admin.html').then(function(r){ return r.text(); }).then(function(src){
+    var out=src.replace(/var ADMIN_HASH = '[0-9a-f]*';/, "var ADMIN_HASH = '"+nh+"';");
+    if(out===src){ alert('Không tìm thấy chỗ lưu mật khẩu trong file.'); return; }
+    var blob=new Blob([out],{type:'text/html'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='admin.html';
+    document.body.appendChild(a); a.click(); a.remove();
+    alert('Đã tạo file admin.html MỚI với mật khẩu mới.\n\nHãy tải file này lên repo để THAY THẾ file admin.html cũ — sau đó mật khẩu mới mới có hiệu lực.');
+  }).catch(function(){
+    alert('Cần mở trang qua web (https) hoặc localhost để dùng tính năng này — không dùng được khi mở trực tiếp bằng file://.');
+  });
+};
 
 /* ===== Khởi tạo ===== */
 load(); renderBrands(); renderEditor();

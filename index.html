@@ -49,18 +49,6 @@
   .hd .tools{margin-left:auto;display:flex;align-items:center;gap:12px}
   .hd .rate{color:#fff;font-weight:600;font-size:12px;text-align:right;line-height:1.25;opacity:.95}
   .hd .rate b{color:var(--gold);font-size:18px;display:block;font-weight:800}
-  .editmode-btn{
-    border:1.5px solid rgba(255,255,255,.7);background:rgba(255,255,255,.08);color:#fff;
-    font-family:inherit;font-weight:700;font-size:13px;padding:10px 14px;border-radius:11px;
-    cursor:pointer;display:flex;align-items:center;gap:6px;transition:.15s
-  }
-  .editmode-btn:hover{background:rgba(255,255,255,.2)}
-  .editmode-btn.on{background:var(--gold);color:var(--ink);border-color:var(--gold)}
-
-  /* ====== Băng thông báo chế độ chỉnh ảnh ====== */
-  .editbar{display:none;background:#fff7da;border-bottom:1px solid var(--gold);padding:11px clamp(16px,4vw,30px);font-size:13px;font-weight:600;color:#8a6d00}
-  .editbar.on{display:block}
-  .editbar i{color:var(--gold-d)}
 
   /* ====== Vùng nội dung ====== */
   .content{padding:clamp(16px,3vw,26px) clamp(14px,4vw,30px) 8px}
@@ -173,15 +161,8 @@
     </div>
     <div class="tools">
       <div class="rate">Lãi suất<b>ưu đãi</b></div>
-      <button class="editmode-btn" id="editToggle"><i class="ti ti-camera"></i> Chỉnh ảnh</button>
     </div>
   </header>
-
-  <!-- BĂNG HƯỚNG DẪN CHỈNH ẢNH -->
-  <div class="editbar" id="editbar">
-    <i class="ti ti-info-circle"></i>
-    Chế độ chỉnh ảnh đang BẬT: bấm <b>Đổi ảnh</b> trên thẻ xe để thêm ảnh xe thật, hoặc bấm vào ô <b>logo hãng</b> để thay logo. Ảnh được lưu ngay trong trình duyệt của bạn.
-  </div>
 
   <main class="content">
     <!-- Phân loại -->
@@ -239,16 +220,11 @@
   </div>
 </div>
 
-<input type="file" id="fileInput" accept="image/*" style="display:none" />
-
 <script>
 /* =====================================================================
-   THAY ẢNH XE THẬT / LOGO HÃNG
-   - Trên trang: bấm "Chỉnh ảnh" (góc phải header) → bấm "Đổi ảnh" trên
-     thẻ xe, hoặc bấm ô logo hãng để chọn ảnh từ máy. Ảnh tự thu nhỏ và
-     LƯU trong trình duyệt (localStorage) — vẫn còn sau khi tải lại.
-   - Trong code: điền img:'duong-dan.jpg' cho xe, hoặc thêm logo PNG vào
-     ô upload. Để trống thì dùng logo vẽ sẵn + icon mặc định.
+   TRANG KHÁCH — CHỈ XEM
+   Nội dung (hãng, xe, ảnh, hạn mức) được quản lý ở trang admin.html và
+   nạp từ file f88-xe-data.json. Trang này không cho chỉnh sửa.
    ===================================================================== */
 var M = 1000000;
 
@@ -389,53 +365,13 @@ var DATA = {
   ]
 };
 
-var type = 'oto', bi = 0, editMode = false;
-var pendingApply = null;
+var type = 'oto', bi = 0;
 
 var $ = function(id){ return document.getElementById(id); };
 var tr = function(v){ return (v/M).toLocaleString('vi-VN',{maximumFractionDigits:0}); };
 var price = function(v){ return tr(v.min)+' – '+tr(v.max)+' <small>triệu</small>'; };
 
-/* ===== Kho ảnh người dùng tự thay (lưu trong trình duyệt) ===== */
-var STORE = {};
-try{ STORE = JSON.parse(localStorage.getItem('f88-images') || '{}'); }catch(e){ STORE = {}; }
-function saveStore(){
-  try{ localStorage.setItem('f88-images', JSON.stringify(STORE)); }
-  catch(e){ alert('Bộ nhớ trình duyệt đã đầy — hãy xoá bớt ảnh đã thay hoặc dùng ảnh nhỏ hơn.'); }
-}
-function carKey(brand, name){ return 'car|'+type+'|'+brand+'|'+name; }
-function logoKey(brand){ return 'logo|'+type+'|'+brand; }
-function carImg(brand, v){ return STORE[carKey(brand, v.n)] || v.img || ''; }
-function brandLogoImg(br){ return STORE[logoKey(br.b)] || br.logo || ''; }
-
-/* Thu nhỏ ảnh trước khi lưu cho nhẹ */
-function shrink(dataURL, maxW, asPng, cb){
-  var img = new Image();
-  img.onload = function(){
-    var scale = Math.min(1, maxW / img.width);
-    var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
-    var c = document.createElement('canvas'); c.width = w; c.height = h;
-    c.getContext('2d').drawImage(img, 0, 0, w, h);
-    cb(asPng ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.82));
-  };
-  img.onerror = function(){ cb(dataURL); };
-  img.src = dataURL;
-}
-function pickImage(asPng, applyFn){
-  pendingApply = function(raw){
-    shrink(raw, asPng ? 240 : 800, asPng, function(out){
-      applyFn(out); saveStore(); renderBrands(); renderPanel();
-    });
-  };
-  $('fileInput').click();
-}
-$('fileInput').onchange = function(){
-  var f = this.files && this.files[0]; if(!f){ return; }
-  var r = new FileReader();
-  r.onload = function(){ if(pendingApply){ pendingApply(r.result); } };
-  r.readAsDataURL(f);
-  this.value = '';
-};
+function brandLogoImg(br){ return br.logo || ''; }
 
 /* ===== Danh sách hãng ===== */
 function renderBrands(){
@@ -443,9 +379,8 @@ function renderBrands(){
   for(var i=0;i<arr.length;i++){
     var up = brandLogoImg(arr[i]);
     var inner = up ? '<img src="'+up+'" alt="'+arr[i].b+'" />' : defaultLogo(arr[i].b);
-    if(editMode) inner += '<span class="cam"><i class="ti ti-camera"></i></span>';
     h += '<button class="brand'+(i===bi?' on':'')+'" data-i="'+i+'">'
-       + '<span class="logo'+(editMode?' editable':'')+'" data-i="'+i+'">'+inner+'</span>'
+       + '<span class="logo" data-i="'+i+'">'+inner+'</span>'
        + '<span class="meta"><span>'+arr[i].b+'</span><span class="cnt">'+arr[i].m.length+' dòng xe</span></span>'
        + '</button>';
   }
@@ -453,16 +388,6 @@ function renderBrands(){
   var btns = document.querySelectorAll('#brands .brand');
   for(var j=0;j<btns.length;j++){
     btns[j].onclick = function(){ bi = +this.getAttribute('data-i'); renderBrands(); renderPanel(); };
-  }
-  if(editMode){
-    var logos = document.querySelectorAll('#brands .logo.editable');
-    for(var k=0;k<logos.length;k++){
-      logos[k].onclick = function(ev){
-        ev.stopPropagation();
-        var br = DATA[type][+this.getAttribute('data-i')];
-        pickImage(true, function(out){ STORE[logoKey(br.b)] = out; });
-      };
-    }
   }
 }
 
@@ -486,22 +411,14 @@ function getFiltered(){
 
 /* ===== Một thẻ xe ===== */
 function cardHTML(v, i, brandName){
-  var hasUser = !!STORE[carKey(brandName, v.n)];
-  /* Ưu tiên: ảnh bạn tự tải lên > ảnh gắn trong code > ảnh tải sẵn trong f88-xe-assets/cars/.
-     Nếu file ảnh không có thì onerror tự rớt về icon mặc định. */
-  var src = STORE[carKey(brandName, v.n)] || v.img || ('f88-xe-assets/cars/'+slug(type+'_'+brandName+'_'+v.n)+'.jpg');
+  /* Ưu tiên: ảnh gắn trong dữ liệu (v.img) > ảnh tải sẵn trong f88-xe-assets/cars/.
+     Nếu không có file ảnh thì onerror tự rớt về icon mặc định. */
+  var src = v.img || ('f88-xe-assets/cars/'+slug(type+'_'+brandName+'_'+v.n)+'.jpg');
   var iconHTML = '<i class=\\\'ti '+v.ic+' ph-icon\\\'></i>';
   var photo = '<img src="'+src+'" alt="'+brandName+' '+v.n+'" loading="lazy" '
             + 'onerror="this.onerror=null;this.parentNode.insertAdjacentHTML(\'afterbegin\',\''+iconHTML+'\');this.remove();" />';
-  var edit = '';
-  if(editMode){
-    edit = '<div class="ph-edit">'
-         + '<button class="ph-btn" data-act="set" data-i="'+i+'"><i class="ti ti-camera"></i> Đổi ảnh</button>'
-         + (hasUser ? '<button class="ph-btn del" data-act="del" data-i="'+i+'" title="Khôi phục ảnh gốc"><i class="ti ti-trash"></i></button>' : '')
-         + '</div>';
-  }
   return '<div class="card">'
-    + '<div class="photo">'+photo+'<div class="tag88">F88</div><div class="yr">'+v.y+'</div>'+edit+'</div>'
+    + '<div class="photo">'+photo+'<div class="tag88">F88</div><div class="yr">'+v.y+'</div></div>'
     + '<div class="info">'
     +   '<div class="name">'+brandName+' '+v.n+'</div>'
     +   '<div class="seg-t">'+v.s+'</div><hr/>'
@@ -531,17 +448,6 @@ function renderPanel(){
     var v = list[+this.getAttribute('data-i')];
     openModal(brand.b, v.n, v.y);
   };
-  if(editMode){
-    var pbtns = grid.querySelectorAll('.ph-btn');
-    for(var b=0;b<pbtns.length;b++) pbtns[b].onclick = function(){
-      var v = list[+this.getAttribute('data-i')];
-      if(this.getAttribute('data-act') === 'del'){
-        delete STORE[carKey(brand.b, v.n)]; saveStore(); renderPanel();
-      } else {
-        pickImage(false, function(out){ STORE[carKey(brand.b, v.n)] = out; });
-      }
-    };
-  }
 }
 
 /* ===== Modal đăng ký ===== */
@@ -576,12 +482,6 @@ for(var k=0;k<segs.length;k++){
     renderBrands(); renderPanel();
   };
 }
-$('editToggle').onclick = function(){
-  editMode = !editMode;
-  this.classList.toggle('on', editMode);
-  $('editbar').classList.toggle('on', editMode);
-  renderBrands(); renderPanel();
-};
 $('q').oninput = renderPanel;
 $('priceFilter').onchange = renderPanel;
 $('sortBy').onchange = renderPanel;
