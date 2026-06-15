@@ -107,6 +107,38 @@
   .login .err{color:var(--red);font-size:12.5px;font-weight:600;min-height:18px;margin:8px 0}
   .login button{width:100%;border:none;border-radius:12px;background:var(--gold);color:var(--ink);font-family:inherit;font-weight:800;font-size:15px;padding:13px;cursor:pointer}
   .login button:hover{background:#ffcf1f}
+
+  /* ===== Điều hướng khu vực ===== */
+  .nav{display:flex;gap:8px;flex-wrap:wrap;max-width:1200px;margin:14px auto 0;padding:0 16px}
+  .navbtn{border:1.5px solid var(--line);background:#fff;color:var(--ink);font-family:inherit;font-weight:700;font-size:14px;padding:11px 16px;border-radius:12px 12px 0 0;cursor:pointer;display:flex;align-items:center;gap:7px}
+  .navbtn.on{background:var(--green);color:#fff;border-color:var(--green)}
+  .badge{background:var(--gold);color:var(--ink);font-size:11px;font-weight:800;border-radius:10px;padding:1px 7px;min-width:18px;text-align:center}
+  .navbtn.on .badge{background:#fff;color:var(--green-d)}
+  .cwrap{max-width:1200px;margin:16px auto;padding:0 16px 40px}
+
+  /* ===== Form nội dung trang ===== */
+  .frow{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+  .frow label{font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.4px}
+  .frow input,.frow textarea{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px;outline:none}
+  .frow input:focus,.frow textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-bg)}
+  .frow .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .benrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .benrow input{flex:1}
+  .benrow .ic{width:150px;flex:0 0 150px}
+  .sechead{font-size:13px;font-weight:800;color:var(--green-d);margin:18px 0 10px;border-top:1px solid var(--line);padding-top:14px}
+
+  /* ===== Danh sách khách đăng ký ===== */
+  .leadbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .lead{border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .lead .who{flex:1;min-width:180px}
+  .lead .who .nm{font-weight:800;font-size:15px}
+  .lead .who .ph{font-weight:700;color:var(--green-d);font-size:14px}
+  .lead .who .meta{font-size:12px;color:var(--gray);margin-top:2px}
+  .lead .st{font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px}
+  .st.moi{background:#fde8c8;color:#9a6b00}
+  .st.lienhe{background:#cfe6ff;color:#0a4a8a}
+  .st.xong{background:var(--green-bg);color:var(--green-d)}
+  .lead select{padding:7px 9px;border:1.5px solid var(--line);border-radius:9px;font-family:inherit;font-size:13px}
 </style>
 </head>
 <body>
@@ -136,22 +168,56 @@
   <button class="btn ghost" id="logoutBtn"><i class="ti ti-logout"></i> Đăng xuất</button>
 </div>
 
-<div class="guide">
-  <b>Tự động cập nhật:</b> Cứ sửa nội dung bên dưới (thêm/xóa hãng, xe, đổi tên, hạn mức, ảnh…) — mọi thay đổi <b>tự lưu lên máy chủ</b> và <b>trang khách cập nhật ngay</b>, không cần tải/đăng file gì cả. Nút <b>“Tải file dữ liệu”</b> chỉ để sao lưu khi cần.
+<!-- ĐIỀU HƯỚNG 3 KHU VỰC -->
+<div class="nav" id="nav">
+  <button class="navbtn on" data-view="cars"><i class="ti ti-car"></i> Dữ liệu xe</button>
+  <button class="navbtn" data-view="content"><i class="ti ti-layout-navbar"></i> Nội dung trang</button>
+  <button class="navbtn" data-view="leads"><i class="ti ti-users"></i> Khách đăng ký <span class="badge" id="leadCount"></span></button>
 </div>
 
-<div class="seg-wrap">
-  <button class="seg on" data-type="oto"><i class="ti ti-car"></i> Ô tô</button>
-  <button class="seg" data-type="xemay"><i class="ti ti-motorbike"></i> Xe máy</button>
-</div>
-
-<div class="layout">
-  <div class="panel">
-    <h2>Hãng xe</h2>
-    <div id="brandList"></div>
-    <button class="btn light sm" id="addBrand" style="width:100%;justify-content:center;margin-top:6px"><i class="ti ti-plus"></i> Thêm hãng</button>
+<!-- KHU VỰC 1: DỮ LIỆU XE -->
+<div id="viewCars">
+  <div class="guide">
+    <b>Tự động cập nhật:</b> Cứ sửa nội dung bên dưới (thêm/xóa hãng, xe, đổi tên, hạn mức, ảnh…) — mọi thay đổi <b>tự lưu lên máy chủ</b> và <b>trang khách cập nhật ngay</b>. Nút <b>“Tải file dữ liệu”</b> chỉ để sao lưu khi cần.
   </div>
-  <div class="panel" id="editor"></div>
+  <div class="seg-wrap">
+    <button class="seg on" data-type="oto"><i class="ti ti-car"></i> Ô tô</button>
+    <button class="seg" data-type="xemay"><i class="ti ti-motorbike"></i> Xe máy</button>
+  </div>
+  <div class="layout">
+    <div class="panel">
+      <h2>Hãng xe</h2>
+      <div id="brandList"></div>
+      <button class="btn light sm" id="addBrand" style="width:100%;justify-content:center;margin-top:6px"><i class="ti ti-plus"></i> Thêm hãng</button>
+    </div>
+    <div class="panel" id="editor"></div>
+  </div>
+</div>
+
+<!-- KHU VỰC 2: NỘI DUNG TRANG -->
+<div id="viewContent" style="display:none">
+  <div class="cwrap"><div class="panel" id="contentForm"></div></div>
+</div>
+
+<!-- KHU VỰC 3: KHÁCH ĐĂNG KÝ -->
+<div id="viewLeads" style="display:none">
+  <div class="cwrap">
+    <div class="panel">
+      <div class="leadbar">
+        <h2 style="margin:0">Khách đăng ký vay</h2>
+        <div class="spacer"></div>
+        <select id="leadFilter">
+          <option value="all">Tất cả</option>
+          <option value="moi">Mới</option>
+          <option value="lienhe">Đã liên hệ</option>
+          <option value="xong">Hoàn tất</option>
+        </select>
+        <button class="btn light sm" id="leadCsv"><i class="ti ti-download"></i> Tải Excel (CSV)</button>
+        <button class="btn light sm" id="leadReload"><i class="ti ti-refresh"></i> Tải lại</button>
+      </div>
+      <div id="leadList"></div>
+    </div>
+  </div>
 </div>
 
 <input type="file" id="fileImg" accept="image/*" />
@@ -174,7 +240,23 @@ var FBCFG = { apiKey:"AIzaSyA3zBPBh7pA-NQnMs5FbpmOQ2p6OQTX2Uo", authDomain:"pick
 var ADMIN_EMAIL = 'admin@f88.vn';
 firebase.initializeApp(FBCFG);
 var fbAuth = firebase.auth();
-var fbDoc  = firebase.firestore().collection('config').doc('carData');
+var fbDoc   = firebase.firestore().collection('config').doc('carData');
+var fbSite  = firebase.firestore().collection('config').doc('site');
+var fbLeads = firebase.firestore().collection('leads');
+
+/* Nội dung trang mặc định (giống index.html) */
+var DEFAULT_SITE = {
+  title:'Vay vốn theo dòng xe',
+  sub:'Cầm cố ô tô · xe máy — giải ngân trong 15 phút',
+  rateLabel:'Lãi suất', rateValue:'ưu đãi',
+  benefits:[
+    {ic:'ti-clock-hour-4', txt:'Giải ngân chỉ 15 phút'},
+    {ic:'ti-car',          txt:'Vẫn được giữ & dùng xe'},
+    {ic:'ti-file-check',   txt:'Thủ tục đơn giản, minh bạch'},
+    {ic:'ti-map-pin',      txt:'Hơn 800 phòng giao dịch'}
+  ],
+  hotline:'1800 6388', footer:'© F88 — Hệ thống cầm đồ & cho vay uy tín.'
+};
 
 var M = 1000000;
 
@@ -538,7 +620,134 @@ $('resetBtn').onclick=function(){
   if(!confirm('Khôi phục về danh sách xe mặc định? Mọi chỉnh sửa hiện tại sẽ mất.')) return;
   DATA=clone(DEFAULT_DATA); bi=0; save(); renderBrands(); renderEditor();
 };
-$('openSite').onclick=function(){ save(); window.open('index.html','_blank'); };
+$('openSite').onclick=function(){ window.open('index.html','_blank'); };
+
+/* ===================================================================
+   KHU VỰC 2 — NỘI DUNG TRANG (config/site)
+   =================================================================== */
+var SITE=null, siteTimer=null;
+var ICON_CHOICES=['ti-clock-hour-4','ti-car','ti-motorbike','ti-file-check','ti-map-pin','ti-shield-check','ti-cash','ti-discount','ti-phone','ti-clock','ti-thumb-up','ti-rosette'];
+function loadSite(cb){
+  fbSite.get().then(function(snap){
+    if(snap.exists){ SITE=Object.assign(clone(DEFAULT_SITE), snap.data()); }
+    else { SITE=clone(DEFAULT_SITE); fbSite.set(SITE); }
+    cb&&cb();
+  }).catch(function(){ SITE=clone(DEFAULT_SITE); cb&&cb(); });
+}
+function saveSite(){
+  setTag('<i class="ti ti-cloud-upload"></i> Đang lưu...');
+  fbSite.set(SITE).then(function(){ setTag('<i class="ti ti-check"></i> Đã lưu (web khách tự cập nhật)'); })
+    .catch(function(e){ setTag('<i class="ti ti-alert-triangle"></i> Lưu lỗi'); alert('Lưu nội dung lỗi: '+(e&&e.message||e)); });
+}
+function touchSite(){ clearTimeout(siteTimer); siteTimer=setTimeout(saveSite,600); setTag('<i class="ti ti-dots"></i> Đang soạn...'); }
+function iconSelect(cur){
+  var h='<select class="ic">'; var found=false;
+  for(var i=0;i<ICON_CHOICES.length;i++){ var s=ICON_CHOICES[i]===cur?' selected':''; if(s)found=true; h+='<option value="'+ICON_CHOICES[i]+'"'+s+'>'+ICON_CHOICES[i].replace('ti-','')+'</option>'; }
+  if(!found) h+='<option value="'+cur+'" selected>'+cur+'</option>';
+  return h+'</select>';
+}
+function renderContent(){
+  if(!SITE) return;
+  var b=SITE.benefits||[];
+  var h='<h2>Nội dung hiển thị trên trang khách</h2>'
+   +'<div class="frow"><label>Tiêu đề chính</label><input id="c-title" value="'+(SITE.title||'').replace(/"/g,'&quot;')+'" /></div>'
+   +'<div class="frow"><label>Phụ đề (dòng nhỏ dưới tiêu đề)</label><input id="c-sub" value="'+(SITE.sub||'').replace(/"/g,'&quot;')+'" /></div>'
+   +'<div class="frow"><div class="two">'
+   +'<div class="frow" style="margin:0"><label>Nhãn lãi suất</label><input id="c-rl" value="'+(SITE.rateLabel||'').replace(/"/g,'&quot;')+'" /></div>'
+   +'<div class="frow" style="margin:0"><label>Giá trị lãi suất</label><input id="c-rv" value="'+(SITE.rateValue||'').replace(/"/g,'&quot;')+'" /></div>'
+   +'</div></div>'
+   +'<div class="sechead">Quyền lợi (thanh dưới trang)</div><div id="benWrap">';
+  for(var i=0;i<b.length;i++){
+    h+='<div class="benrow"><i class="ti '+b[i].ic+'" style="font-size:22px;color:var(--green);width:26px"></i>'
+      +'<span class="ic" data-i="'+i+'">'+iconSelect(b[i].ic)+'</span>'
+      +'<input data-bi="'+i+'" value="'+(b[i].txt||'').replace(/"/g,'&quot;')+'" />'
+      +'<button class="btn danger sm" data-delben="'+i+'"><i class="ti ti-trash"></i></button></div>';
+  }
+  h+='</div><button class="btn light sm" id="addBen" style="margin-top:4px"><i class="ti ti-plus"></i> Thêm quyền lợi</button>'
+   +'<div class="sechead">Chân trang (footer)</div>'
+   +'<div class="frow"><label>Hotline</label><input id="c-hot" value="'+(SITE.hotline||'').replace(/"/g,'&quot;')+'" /></div>'
+   +'<div class="frow"><label>Dòng chữ footer</label><textarea id="c-foot" rows="2">'+(SITE.footer||'')+'</textarea></div>';
+  $('contentForm').innerHTML=h;
+  // bind
+  $('c-title').oninput=function(){ SITE.title=this.value; touchSite(); };
+  $('c-sub').oninput=function(){ SITE.sub=this.value; touchSite(); };
+  $('c-rl').oninput=function(){ SITE.rateLabel=this.value; touchSite(); };
+  $('c-rv').oninput=function(){ SITE.rateValue=this.value; touchSite(); };
+  $('c-hot').oninput=function(){ SITE.hotline=this.value; touchSite(); };
+  $('c-foot').oninput=function(){ SITE.footer=this.value; touchSite(); };
+  $('contentForm').querySelectorAll('input[data-bi]').forEach(function(el){ el.oninput=function(){ SITE.benefits[+this.getAttribute('data-bi')].txt=this.value; touchSite(); }; });
+  $('contentForm').querySelectorAll('.benrow select.ic').forEach(function(el){ el.onchange=function(){ var i=+this.parentNode.getAttribute('data-i'); SITE.benefits[i].ic=this.value; touchSite(); renderContent(); }; });
+  $('contentForm').querySelectorAll('[data-delben]').forEach(function(el){ el.onclick=function(){ SITE.benefits.splice(+this.getAttribute('data-delben'),1); touchSite(); renderContent(); }; });
+  $('addBen').onclick=function(){ SITE.benefits.push({ic:'ti-circle-check',txt:'Quyền lợi mới'}); touchSite(); renderContent(); };
+}
+
+/* ===================================================================
+   KHU VỰC 3 — KHÁCH ĐĂNG KÝ (collection leads)
+   =================================================================== */
+var LEADS=[];
+var STLABEL={moi:'Mới', lienhe:'Đã liên hệ', xong:'Hoàn tất'};
+function fmtTime(ts){ try{ var d=ts&&ts.toDate?ts.toDate():null; if(!d) return ''; return d.toLocaleString('vi-VN'); }catch(e){ return ''; } }
+function loadLeads(){
+  $('leadList').innerHTML='<div class="empty" style="padding:30px">Đang tải...</div>';
+  fbLeads.orderBy('createdAt','desc').limit(500).get().then(function(qs){
+    LEADS=[]; qs.forEach(function(doc){ LEADS.push(Object.assign({id:doc.id}, doc.data())); });
+    renderLeads();
+  }).catch(function(e){ $('leadList').innerHTML='<div class="empty" style="padding:30px">Lỗi tải danh sách: '+(e&&e.message||e)+'</div>'; });
+}
+function renderLeads(){
+  var f=$('leadFilter').value;
+  var list=LEADS.filter(function(l){ return f==='all' || (l.status||'moi')===f; });
+  $('leadCount').textContent = LEADS.length ? LEADS.length : '';
+  if(!list.length){ $('leadList').innerHTML='<div class="empty" style="padding:40px"><i class="ti ti-inbox" style="font-size:36px;display:block;color:var(--green-l)"></i>Chưa có khách đăng ký'+(f!=='all'?' ở trạng thái này':'')+'.</div>'; return; }
+  var h='';
+  for(var i=0;i<list.length;i++){
+    var l=list[i], st=l.status||'moi';
+    h+='<div class="lead">'
+      +'<div class="who"><span class="nm">'+(l.name||'')+'</span> · <a class="ph" href="tel:'+(l.phone||'').replace(/\s/g,'')+'">'+(l.phone||'')+'</a>'
+      +'<div class="meta"><i class="ti ti-car"></i> '+(l.brand||'')+' '+(l.car||'')+(l.year?(' · đời '+l.year):'')+(l.city?(' · '+l.city):'')+' · '+fmtTime(l.createdAt)+'</div></div>'
+      +'<span class="st '+st+'">'+(STLABEL[st]||st)+'</span>'
+      +'<select data-st="'+l.id+'">'
+        +'<option value="moi"'+(st==='moi'?' selected':'')+'>Mới</option>'
+        +'<option value="lienhe"'+(st==='lienhe'?' selected':'')+'>Đã liên hệ</option>'
+        +'<option value="xong"'+(st==='xong'?' selected':'')+'>Hoàn tất</option>'
+      +'</select>'
+      +'<button class="btn danger sm" data-dellead="'+l.id+'"><i class="ti ti-trash"></i></button>'
+      +'</div>';
+  }
+  $('leadList').innerHTML=h;
+  $('leadList').querySelectorAll('select[data-st]').forEach(function(el){ el.onchange=function(){
+    var id=this.getAttribute('data-st'), v=this.value;
+    fbLeads.doc(id).update({status:v}).then(function(){ var it=LEADS.filter(function(x){return x.id===id;})[0]; if(it) it.status=v; renderLeads(); });
+  };});
+  $('leadList').querySelectorAll('[data-dellead]').forEach(function(el){ el.onclick=function(){
+    var id=this.getAttribute('data-dellead');
+    if(!confirm('Xóa đăng ký này?')) return;
+    fbLeads.doc(id).delete().then(function(){ LEADS=LEADS.filter(function(x){return x.id!==id;}); renderLeads(); });
+  };});
+}
+$('leadFilter').onchange=renderLeads;
+$('leadReload').onclick=loadLeads;
+$('leadCsv').onclick=function(){
+  if(!LEADS.length){ alert('Chưa có dữ liệu.'); return; }
+  var rows=[['Họ tên','SĐT','Tỉnh/TP','Hãng','Xe','Đời','Trạng thái','Thời gian']];
+  LEADS.forEach(function(l){ rows.push([l.name||'',l.phone||'',l.city||'',l.brand||'',l.car||'',l.year||'',STLABEL[l.status||'moi']||'',fmtTime(l.createdAt)]); });
+  var csv='﻿'+rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='f88-khach-dang-ky.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+};
+
+/* ===== Chuyển khu vực ===== */
+var contentReady=false;
+function showView(v){
+  $('viewCars').style.display    = v==='cars'?'block':'none';
+  $('viewContent').style.display = v==='content'?'block':'none';
+  $('viewLeads').style.display   = v==='leads'?'block':'none';
+  document.querySelectorAll('.navbtn').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-view')===v); });
+  if(v==='content'){ if(!SITE){ loadSite(renderContent); } else { renderContent(); } }
+  if(v==='leads'){ loadLeads(); }
+}
+document.querySelectorAll('.navbtn').forEach(function(b){ b.onclick=function(){ showView(this.getAttribute('data-view')); }; });
 
 /* ===== Đăng nhập / Đăng xuất / Đổi mật khẩu (Firebase Auth) ===== */
 var appStarted=false;

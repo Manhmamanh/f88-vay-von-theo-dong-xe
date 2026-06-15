@@ -125,6 +125,12 @@
   .benefit{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:var(--green-d)}
   .benefit i{font-size:24px;background:#fff;color:var(--green);width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:0 0 42px;box-shadow:var(--shadow-sm)}
 
+  /* ====== Footer ====== */
+  .foot{background:var(--green-d);color:#dff0e8;padding:18px clamp(16px,4vw,30px);text-align:center;font-size:13px;line-height:1.6}
+  .foot:empty{display:none}
+  .foot a{color:var(--gold);font-weight:700;text-decoration:none}
+  .foot .hot{font-size:16px;font-weight:800;color:#fff;display:block;margin-bottom:4px}
+
   /* ====== Modal đăng ký ====== */
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;align-items:center;justify-content:center;padding:16px}
   .overlay.show{display:flex}
@@ -156,11 +162,11 @@
   <header class="hd">
     <div class="logo88">F88</div>
     <div class="ttl">
-      <h1>Vay vốn theo dòng xe</h1>
-      <div class="sub">Cầm cố ô tô · xe máy — giải ngân trong 15 phút</div>
+      <h1 id="siteTitle">Vay vốn theo dòng xe</h1>
+      <div class="sub" id="siteSub">Cầm cố ô tô · xe máy — giải ngân trong 15 phút</div>
     </div>
     <div class="tools">
-      <div class="rate">Lãi suất<b>ưu đãi</b></div>
+      <div class="rate" id="siteRate">Lãi suất<b>ưu đãi</b></div>
     </div>
   </header>
 
@@ -201,12 +207,15 @@
   </main>
 
   <!-- QUYỀN LỢI -->
-  <div class="benefits">
+  <div class="benefits" id="benefits">
     <div class="benefit"><i class="ti ti-clock-hour-4"></i><span>Giải ngân chỉ 15 phút</span></div>
     <div class="benefit"><i class="ti ti-car"></i><span>Vẫn được giữ &amp; dùng xe</span></div>
     <div class="benefit"><i class="ti ti-file-check"></i><span>Thủ tục đơn giản, minh bạch</span></div>
     <div class="benefit"><i class="ti ti-map-pin"></i><span>Hơn 800 phòng giao dịch</span></div>
   </div>
+
+  <!-- FOOTER -->
+  <footer class="foot" id="siteFoot"></footer>
 </div>
 
 <!-- MODAL ĐĂNG KÝ -->
@@ -465,13 +474,22 @@ function openModal(brand, name, yr){
     + '<button class="submit" id="submit">Gửi đăng ký</button>';
   $('overlay').classList.add('show');
   $('submit').onclick = function(){
-    var nm = $('f-name').value.trim(), ph = $('f-phone').value.trim();
+    var nm = $('f-name').value.trim(), ph = $('f-phone').value.trim(), ct = $('f-city').value.trim();
     if(!nm || !ph){ alert('Vui lòng nhập Họ tên và Số điện thoại.'); return; }
-    /* === GẮN BACKEND THẬT Ở ĐÂY: gửi {nm, ph, city, brand, name, yr} lên server/API === */
-    $('modalBody').innerHTML =
-        '<div class="ok"><i class="ti ti-circle-check"></i>'
-      + '<h3 style="color:var(--green);margin:10px 0 4px">Đăng ký thành công!</h3>'
-      + '<p style="color:var(--gray);font-size:14px;margin:0">F88 sẽ liên hệ với bạn trong ít phút để tư vấn khoản vay cho <b>'+brand+' '+name+'</b>.</p></div>';
+    var btn = this; btn.disabled = true; btn.textContent = 'Đang gửi...';
+    function done(){
+      $('modalBody').innerHTML =
+          '<div class="ok"><i class="ti ti-circle-check"></i>'
+        + '<h3 style="color:var(--green);margin:10px 0 4px">Đăng ký thành công!</h3>'
+        + '<p style="color:var(--gray);font-size:14px;margin:0">F88 sẽ liên hệ với bạn trong ít phút để tư vấn khoản vay cho <b>'+brand+' '+name+'</b>.</p></div>';
+    }
+    /* Lưu thông tin khách vào Firestore (collection "leads") để admin quản lý */
+    try{
+      firebase.firestore().collection('leads').add({
+        name:nm, phone:ph, city:ct, brand:brand, car:name, year:yr, status:'moi',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(done).catch(function(){ btn.disabled=false; btn.textContent='Gửi đăng ký'; alert('Gửi đăng ký lỗi, vui lòng thử lại hoặc gọi hotline.'); });
+    }catch(e){ done(); }
   };
 }
 $('close').onclick = function(){ $('overlay').classList.remove('show'); };
@@ -498,16 +516,39 @@ $('sortBy').onchange = renderPanel;
 var booted = false;
 function boot(){ if(bi >= DATA[type].length) bi = 0; renderBrands(); renderPanel(); booted = true; }
 function applyData(d){ if(d && d.oto && d.xemay){ DATA = d; } }
+
+/* ===== Nội dung trang (header/quyền lợi/footer) — admin chỉnh được ===== */
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function applySite(s){
+  if(!s) return;
+  if(s.title){ $('siteTitle').textContent = s.title; document.title = 'F88 — '+s.title; }
+  if(s.sub) $('siteSub').textContent = s.sub;
+  if(s.rateLabel || s.rateValue) $('siteRate').innerHTML = esc(s.rateLabel||'')+'<b>'+esc(s.rateValue||'')+'</b>';
+  if(s.benefits && s.benefits.length){
+    $('benefits').innerHTML = s.benefits.map(function(b){
+      return '<div class="benefit"><i class="ti '+esc(b.ic||'ti-circle-check')+'"></i><span>'+esc(b.txt||'')+'</span></div>';
+    }).join('');
+  }
+  var f='';
+  if(s.hotline) f += '<span class="hot"><i class="ti ti-phone"></i> Hotline: <a href="tel:'+esc(s.hotline.replace(/\s/g,''))+'">'+esc(s.hotline)+'</a></span>';
+  if(s.footer) f += esc(s.footer);
+  $('siteFoot').innerHTML = f;
+}
+
 (function(){
   try{
     firebase.initializeApp(FBCFG);
-    firebase.firestore().collection('config').doc('carData').onSnapshot(
+    var fs = firebase.firestore();
+    fs.collection('config').doc('carData').onSnapshot(
       function(snap){
         if(snap && snap.exists){ try{ applyData(JSON.parse(snap.data().json)); }catch(e){} }
         boot();
       },
       function(err){ if(!booted) boot(); }
     );
+    fs.collection('config').doc('site').onSnapshot(function(snap){
+      if(snap && snap.exists) applySite(snap.data());
+    }, function(){});
     /* Nếu Firestore quá chậm/không phản hồi, vẫn hiển thị dữ liệu mặc định */
     setTimeout(function(){ if(!booted) boot(); }, 3500);
   }catch(e){ boot(); }

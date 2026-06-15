@@ -2,10 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Dữ liệu xe: khách (chưa đăng nhập) ĐỌC được; chỉ admin đã đăng nhập mới GHI.
+    // Dữ liệu xe + nội dung trang: khách ĐỌC được; chỉ admin đăng nhập mới GHI.
     match /config/{docId} {
       allow read: if true;
       allow write: if request.auth != null;
+    }
+
+    // Khách đăng ký vay: khách (chưa đăng nhập) chỉ được TẠO MỚI (có kiểm tra cơ bản).
+    // Chỉ admin đăng nhập mới được ĐỌC / sửa trạng thái / xóa (vì chứa SĐT khách).
+    match /leads/{id} {
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() < 120
+                    && request.resource.data.phone is string
+                    && request.resource.data.phone.size() > 0
+                    && request.resource.data.phone.size() < 40;
+      allow read, update, delete: if request.auth != null;
     }
 
     // Mặc định khóa toàn bộ phần còn lại.
