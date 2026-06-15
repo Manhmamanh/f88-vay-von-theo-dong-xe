@@ -1,0 +1,15 @@
+{
+  "hosting": {
+    "site": "landingpagmmm",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      ".git/**",
+      "**/.git/**",
+      "**/.*",
+      "**/node_modules/**",
+      "README.md"
+    ]
+  }
+}
