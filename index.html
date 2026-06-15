@@ -220,12 +220,17 @@
   </div>
 </div>
 
+<!-- Firebase SDK (đọc dữ liệu xe trực tiếp từ Firestore — admin sửa là tự cập nhật) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
 /* =====================================================================
    TRANG KHÁCH — CHỈ XEM
-   Nội dung (hãng, xe, ảnh, hạn mức) được quản lý ở trang admin.html và
-   nạp từ file f88-xe-data.json. Trang này không cho chỉnh sửa.
+   Nội dung (hãng, xe, ảnh, hạn mức) được quản lý ở admin.html, lưu trên
+   Firestore. Trang này đọc trực tiếp & tự cập nhật khi admin thay đổi.
    ===================================================================== */
+var FBCFG = { apiKey:"AIzaSyA3zBPBh7pA-NQnMs5FbpmOQ2p6OQTX2Uo", authDomain:"pickleball-duc-dien.firebaseapp.com", projectId:"pickleball-duc-dien" };
 var M = 1000000;
 
 /* ===== Logo hãng vẽ sẵn bằng SVG (hiển thị nét, hợp mọi thiết bị) ===== */
@@ -487,22 +492,25 @@ $('priceFilter').onchange = renderPanel;
 $('sortBy').onchange = renderPanel;
 
 /* ===== Khởi tạo =====
-   Thứ tự ưu tiên dữ liệu:
-   1) localStorage 'f88-xe-data' (do trang admin lưu — xem ngay trên máy bạn)
-   2) file f88-xe-data.json đặt cạnh trang (dùng khi đăng web cho khách)
-   3) dữ liệu mặc định gắn sẵn trong trang */
-function boot(){ renderBrands(); renderPanel(); }
+   Đọc dữ liệu trực tiếp từ Firestore (config/carData). Khi admin lưu thay
+   đổi, onSnapshot tự cập nhật trang ngay mà không cần tải lại.
+   Nếu không kết nối được Firestore thì dùng dữ liệu mặc định gắn sẵn. */
+var booted = false;
+function boot(){ if(bi >= DATA[type].length) bi = 0; renderBrands(); renderPanel(); booted = true; }
 function applyData(d){ if(d && d.oto && d.xemay){ DATA = d; } }
 (function(){
   try{
-    var saved = localStorage.getItem('f88-xe-data');
-    if(saved){ applyData(JSON.parse(saved)); boot(); return; }
-  }catch(e){}
-  if(window.fetch){
-    fetch('f88-xe-data.json').then(function(r){ return r.ok ? r.json() : null; })
-      .then(function(j){ applyData(j); boot(); })
-      .catch(boot);
-  } else { boot(); }
+    firebase.initializeApp(FBCFG);
+    firebase.firestore().collection('config').doc('carData').onSnapshot(
+      function(snap){
+        if(snap && snap.exists){ try{ applyData(JSON.parse(snap.data().json)); }catch(e){} }
+        boot();
+      },
+      function(err){ if(!booted) boot(); }
+    );
+    /* Nếu Firestore quá chậm/không phản hồi, vẫn hiển thị dữ liệu mặc định */
+    setTimeout(function(){ if(!booted) boot(); }, 3500);
+  }catch(e){ boot(); }
 })();
 </script>
 </body>

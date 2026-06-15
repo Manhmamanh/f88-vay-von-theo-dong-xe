@@ -116,7 +116,7 @@
   <div class="box">
     <div class="logo88">F88</div>
     <h2>Đăng nhập quản trị</h2>
-    <p>Nhập mật khẩu để vào trang quản lý dữ liệu xe</p>
+    <p>Tài khoản: <b>admin@f88.vn</b><br/>Nhập mật khẩu để vào trang quản lý</p>
     <input id="pw" type="password" placeholder="Mật khẩu" autocomplete="current-password" />
     <div class="err" id="loginErr"></div>
     <button id="loginBtn">Đăng nhập</button>
@@ -137,12 +137,7 @@
 </div>
 
 <div class="guide">
-  <b>Cách dùng — 3 bước:</b>
-  <ol>
-    <li>Sửa nội dung bên dưới (thêm/xóa hãng, xe, đổi tên, hạn mức, ảnh…). Mọi thay đổi <b>tự lưu</b> vào máy bạn để xem thử ngay trên “Mở trang web”.</li>
-    <li>Xem ổn rồi, bấm <b>“Tải file dữ liệu (.json)”</b> để tải về file <b>f88-xe-data.json</b>.</li>
-    <li>Đưa file <b>f88-xe-data.json</b> lên web (cùng thư mục với trang chính) là khách sẽ thấy nội dung mới.</li>
-  </ol>
+  <b>Tự động cập nhật:</b> Cứ sửa nội dung bên dưới (thêm/xóa hãng, xe, đổi tên, hạn mức, ảnh…) — mọi thay đổi <b>tự lưu lên máy chủ</b> và <b>trang khách cập nhật ngay</b>, không cần tải/đăng file gì cả. Nút <b>“Tải file dữ liệu”</b> chỉ để sao lưu khi cần.
 </div>
 
 <div class="seg-wrap">
@@ -162,40 +157,24 @@
 <input type="file" id="fileImg" accept="image/*" />
 <input type="file" id="fileJson" accept="application/json,.json" />
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
 /* =====================================================================
-   BẢO MẬT ĐĂNG NHẬP (lớp chặn cơ bản cho web tĩnh)
-   - Mật khẩu KHÔNG lưu dạng chữ trần, chỉ lưu mã băm SHA-256.
-   - Đổi mật khẩu: bấm nút "Đổi mật khẩu" — trang sẽ tạo file admin.html
-     mới với mã băm mới để bạn tải lên thay thế.
+   ĐĂNG NHẬP & LƯU DỮ LIỆU — Firebase Auth + Firestore
+   - Đăng nhập bằng tài khoản Firebase thật (admin@f88.vn). Mật khẩu do
+     Firebase quản lý trên máy chủ, không nằm trong mã nguồn.
+   - Dữ liệu xe lưu ở Firestore (config/carData). Admin lưu là trang khách
+     TỰ CẬP NHẬT ngay.
    ===================================================================== */
-var ADMIN_HASH = 'e00413b4a77024f5f3f57901588ea7e1a356c707f2196269bb4d922c1a010927'; /*ADMIN_HASH*/
-
-/* SHA-256 thuần JS (chạy được cả khi mở bằng file://) */
-function sha256(ascii){
-  function rr(v,a){ return (v>>>a)|(v<<(32-a)); }
-  var mp=Math.pow, maxW=mp(2,32), res='', i,j;
-  var words=[], bitLen=ascii.length*8;
-  var hash=sha256.h=sha256.h||[], k=sha256.k=sha256.k||[], pc=k.length, comp={};
-  for(var c=2; pc<64; c++){ if(!comp[c]){ for(i=0;i<313;i+=c) comp[i]=c; hash[pc]=(mp(c,.5)*maxW)|0; k[pc++]=(mp(c,1/3)*maxW)|0; } }
-  ascii+='\x80'; while(ascii.length%64-56) ascii+='\x00';
-  for(i=0;i<ascii.length;i++){ j=ascii.charCodeAt(i); if(j>>8) return; words[i>>2]|=j<<((3-i)%4*8); }
-  words[words.length]=(bitLen/maxW)|0; words[words.length]=bitLen;
-  for(j=0;j<words.length;){
-    var w=words.slice(j,j+=16), oh=hash; hash=hash.slice(0,8);
-    for(i=0;i<64;i++){
-      var w15=w[i-15], w2=w[i-2], a=hash[0], e=hash[4];
-      var t1=hash[7]+(rr(e,6)^rr(e,11)^rr(e,25))+((e&hash[5])^(~e&hash[6]))+k[i]
-            +(w[i]=(i<16)?w[i]:(w[i-16]+(rr(w15,7)^rr(w15,18)^(w15>>>3))+w[i-7]+(rr(w2,17)^rr(w2,19)^(w2>>>10)))|0);
-      var t2=(rr(a,2)^rr(a,13)^rr(a,22))+((a&hash[1])^(a&hash[2])^(hash[1]&hash[2]));
-      hash=[(t1+t2)|0].concat(hash); hash[4]=(hash[4]+t1)|0;
-    }
-    for(i=0;i<8;i++) hash[i]=(hash[i]+oh[i])|0;
-  }
-  for(i=0;i<8;i++){ for(j=3;j+1;j--){ var b=(hash[i]>>(j*8))&255; res+=((b<16)?0:'')+b.toString(16); } }
-  return res;
-}
-function hashPw(pw){ return sha256(unescape(encodeURIComponent(pw))); }
+var FBCFG = { apiKey:"AIzaSyA3zBPBh7pA-NQnMs5FbpmOQ2p6OQTX2Uo", authDomain:"pickleball-duc-dien.firebaseapp.com", projectId:"pickleball-duc-dien" };
+var ADMIN_EMAIL = 'admin@f88.vn';
+firebase.initializeApp(FBCFG);
+var fbAuth = firebase.auth();
+var fbDoc  = firebase.firestore().collection('config').doc('carData');
 
 var M = 1000000;
 
@@ -331,20 +310,25 @@ var $ = function(id){ return document.getElementById(id); };
 var DATA, type='oto', bi=0;
 var pendingImg=null; /* callback nhận dataURL ảnh đã chọn */
 
-/* ===== Nạp dữ liệu ===== */
+/* ===== Nạp / Lưu dữ liệu trên Firestore ===== */
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
-function load(){
-  try{ var s=localStorage.getItem('f88-xe-data'); if(s){ var d=JSON.parse(s); if(d&&d.oto&&d.xemay){ DATA=d; return; } } }catch(e){}
-  DATA = clone(DEFAULT_DATA);
+function setTag(html){ var t=$('savedTag'); if(t) t.innerHTML=html; }
+/* Đọc dữ liệu từ Firestore; nếu chưa có thì dùng mặc định và tự ghi lên (seed). */
+function load(cb){
+  fbDoc.get().then(function(snap){
+    if(snap.exists){ try{ var d=JSON.parse(snap.data().json); if(d&&d.oto&&d.xemay){ DATA=d; cb(); return; } }catch(e){} }
+    DATA = clone(DEFAULT_DATA); cb();
+    save(); /* seed lần đầu */
+  }).catch(function(){ DATA = clone(DEFAULT_DATA); cb(); });
 }
 var saveTimer=null;
 function save(){
-  try{ localStorage.setItem('f88-xe-data', JSON.stringify(DATA)); }
-  catch(e){ alert('Bộ nhớ trình duyệt đầy — ảnh quá lớn. Hãy dùng ảnh nhỏ hơn hoặc xóa bớt ảnh.'); return; }
-  var t=$('savedTag'); t.innerHTML='<i class="ti ti-check"></i> Đã lưu'; t.style.background='rgba(255,255,255,.16)';
+  setTag('<i class="ti ti-cloud-upload"></i> Đang lưu...');
+  return fbDoc.set({ json: JSON.stringify(DATA), updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
+    .then(function(){ setTag('<i class="ti ti-check"></i> Đã lưu (web khách tự cập nhật)'); })
+    .catch(function(e){ setTag('<i class="ti ti-alert-triangle"></i> Lưu lỗi'); alert('Lưu lên máy chủ thất bại: '+(e&&e.message||e)+'\nKiểm tra kết nối mạng rồi thử lại.'); });
 }
-function touch(){ /* gọi sau mỗi thay đổi */ clearTimeout(saveTimer); saveTimer=setTimeout(save,250);
-  var t=$('savedTag'); t.innerHTML='<i class="ti ti-dots"></i> Đang lưu...'; }
+function touch(){ clearTimeout(saveTimer); saveTimer=setTimeout(save,600); setTag('<i class="ti ti-dots"></i> Đang soạn...'); }
 
 /* ===== Ảnh ===== */
 function shrink(dataURL, maxW, cb){
@@ -556,41 +540,45 @@ $('resetBtn').onclick=function(){
 };
 $('openSite').onclick=function(){ save(); window.open('index.html','_blank'); };
 
-/* ===== Đăng nhập / Đăng xuất / Đổi mật khẩu ===== */
-function unlock(){ $('login').classList.add('hidden'); }
+/* ===== Đăng nhập / Đăng xuất / Đổi mật khẩu (Firebase Auth) ===== */
+var appStarted=false;
+function unlock(){ $('login').classList.add('hidden'); if(!appStarted){ appStarted=true; load(function(){ renderBrands(); renderEditor(); }); } }
+function lock(){ $('login').classList.remove('hidden'); }
 function doLogin(){
   var v=$('pw').value||'';
-  if(hashPw(v)===ADMIN_HASH){ try{ sessionStorage.setItem('f88-admin-ok','1'); }catch(e){} $('pw').value=''; $('loginErr').textContent=''; unlock(); }
-  else { $('loginErr').textContent='Sai mật khẩu. Vui lòng thử lại.'; $('pw').value=''; $('pw').focus(); }
+  $('loginErr').textContent='Đang kiểm tra...';
+  fbAuth.signInWithEmailAndPassword(ADMIN_EMAIL, v)
+    .then(function(){ $('pw').value=''; $('loginErr').textContent=''; /* onAuthStateChanged sẽ mở khóa */ })
+    .catch(function(e){
+      var m=(e&&e.code||'').indexOf('password')>=0||(e&&e.code||'').indexOf('credential')>=0 ? 'Sai mật khẩu. Vui lòng thử lại.' : 'Đăng nhập lỗi: '+(e&&e.message||e);
+      $('loginErr').textContent=m; $('pw').value=''; $('pw').focus();
+    });
 }
 $('loginBtn').onclick=doLogin;
 $('pw').addEventListener('keydown',function(e){ if(e.key==='Enter') doLogin(); });
-try{ if(sessionStorage.getItem('f88-admin-ok')==='1') unlock(); else $('pw').focus(); }catch(e){ $('pw').focus(); }
 
-$('logoutBtn').onclick=function(){
-  try{ sessionStorage.removeItem('f88-admin-ok'); }catch(e){}
-  location.reload();
-};
+/* Firebase tự nhớ đăng nhập — refresh không phải nhập lại */
+fbAuth.onAuthStateChanged(function(user){
+  if(user) unlock(); else { lock(); $('pw').focus(); }
+});
+
+$('logoutBtn').onclick=function(){ fbAuth.signOut().then(function(){ location.reload(); }); };
+
 $('changePwBtn').onclick=function(){
+  var u=fbAuth.currentUser; if(!u){ alert('Bạn cần đăng nhập trước.'); return; }
   var np=prompt('Nhập MẬT KHẨU MỚI (nên ≥ 10 ký tự, có chữ hoa, số, ký tự đặc biệt):');
   if(np===null) return;
-  if(np.length<6){ alert('Mật khẩu quá ngắn (tối thiểu 6 ký tự).'); return; }
+  if(np.length<6){ alert('Mật khẩu quá ngắn (Firebase yêu cầu tối thiểu 6 ký tự).'); return; }
   if(prompt('Nhập lại mật khẩu mới để xác nhận:')!==np){ alert('Hai lần nhập không khớp.'); return; }
-  var nh=hashPw(np);
-  fetch('admin.html').then(function(r){ return r.text(); }).then(function(src){
-    var out=src.replace(/var ADMIN_HASH = '[0-9a-f]*';/, "var ADMIN_HASH = '"+nh+"';");
-    if(out===src){ alert('Không tìm thấy chỗ lưu mật khẩu trong file.'); return; }
-    var blob=new Blob([out],{type:'text/html'});
-    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='admin.html';
-    document.body.appendChild(a); a.click(); a.remove();
-    alert('Đã tạo file admin.html MỚI với mật khẩu mới.\n\nHãy tải file này lên repo để THAY THẾ file admin.html cũ — sau đó mật khẩu mới mới có hiệu lực.');
-  }).catch(function(){
-    alert('Cần mở trang qua web (https) hoặc localhost để dùng tính năng này — không dùng được khi mở trực tiếp bằng file://.');
-  });
+  u.updatePassword(np)
+    .then(function(){ alert('Đổi mật khẩu thành công! Lần sau đăng nhập bằng mật khẩu mới.'); })
+    .catch(function(e){
+      if((e&&e.code||'').indexOf('recent-login')>=0){ alert('Vì lý do bảo mật, hãy Đăng xuất rồi đăng nhập lại, sau đó đổi mật khẩu ngay.'); }
+      else alert('Đổi mật khẩu lỗi: '+(e&&e.message||e));
+    });
 };
 
-/* ===== Khởi tạo ===== */
-load(); renderBrands(); renderEditor();
+/* ===== Khởi tạo (chỉ chạy sau khi đăng nhập, trong unlock) ===== */
 </script>
 </body>
 </html>
