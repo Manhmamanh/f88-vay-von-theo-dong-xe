@@ -704,7 +704,8 @@ function renderLeads(){
     var l=list[i], st=l.status||'moi';
     h+='<div class="lead">'
       +'<div class="who"><span class="nm">'+(l.name||'')+'</span> · <a class="ph" href="tel:'+(l.phone||'').replace(/\s/g,'')+'">'+(l.phone||'')+'</a>'
-      +'<div class="meta"><i class="ti ti-car"></i> '+(l.brand||'')+' '+(l.car||'')+(l.year?(' · đời '+l.year):'')+(l.city?(' · '+l.city):'')+' · '+fmtTime(l.createdAt)+'</div></div>'
+      +'<div class="meta"><i class="ti ti-car"></i> '+(l.brand||'')+' '+(l.car||'')+(l.year?(' · đời '+l.year):'')+'</div>'
+      +'<div class="meta"><i class="ti ti-map-pin"></i> '+[l.ward,l.city].filter(Boolean).join(', ')+' · '+fmtTime(l.createdAt)+'</div></div>'
       +'<span class="st '+st+'">'+(STLABEL[st]||st)+'</span>'
       +'<select data-st="'+l.id+'">'
         +'<option value="moi"'+(st==='moi'?' selected':'')+'>Mới</option>'
@@ -729,8 +730,8 @@ $('leadFilter').onchange=renderLeads;
 $('leadReload').onclick=loadLeads;
 $('leadCsv').onclick=function(){
   if(!LEADS.length){ alert('Chưa có dữ liệu.'); return; }
-  var rows=[['Họ tên','SĐT','Tỉnh/TP','Hãng','Xe','Đời','Trạng thái','Thời gian']];
-  LEADS.forEach(function(l){ rows.push([l.name||'',l.phone||'',l.city||'',l.brand||'',l.car||'',l.year||'',STLABEL[l.status||'moi']||'',fmtTime(l.createdAt)]); });
+  var rows=[['Họ tên','SĐT','Phường/Xã','Tỉnh/TP','Hãng','Xe','Đời','Trạng thái','Thời gian']];
+  LEADS.forEach(function(l){ rows.push([l.name||'',l.phone||'',l.ward||'',l.city||'',l.brand||'',l.car||'',l.year||'',STLABEL[l.status||'moi']||'',fmtTime(l.createdAt)]); });
   var csv='﻿'+rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\r\n');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='f88-khach-dang-ky.csv';

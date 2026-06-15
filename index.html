@@ -471,10 +471,12 @@ function openModal(brand, name, yr){
     + '<label>Họ và tên</label><input id="f-name" type="text" placeholder="Nguyễn Văn A" />'
     + '<label>Số điện thoại</label><input id="f-phone" type="tel" inputmode="numeric" placeholder="09xx xxx xxx" />'
     + '<label>Tỉnh / Thành phố</label><input id="f-city" type="text" placeholder="Hà Nội" />'
+    + '<label>Phường / Xã</label><input id="f-ward" type="text" placeholder="Phường Dịch Vọng" />'
     + '<button class="submit" id="submit">Gửi đăng ký</button>';
   $('overlay').classList.add('show');
   $('submit').onclick = function(){
-    var nm = $('f-name').value.trim(), ph = $('f-phone').value.trim(), ct = $('f-city').value.trim();
+    var nm = $('f-name').value.trim(), ph = $('f-phone').value.trim(),
+        ct = $('f-city').value.trim(), wd = $('f-ward').value.trim();
     if(!nm || !ph){ alert('Vui lòng nhập Họ tên và Số điện thoại.'); return; }
     var btn = this; btn.disabled = true; btn.textContent = 'Đang gửi...';
     function done(){
@@ -483,13 +485,14 @@ function openModal(brand, name, yr){
         + '<h3 style="color:var(--green);margin:10px 0 4px">Đăng ký thành công!</h3>'
         + '<p style="color:var(--gray);font-size:14px;margin:0">F88 sẽ liên hệ với bạn trong ít phút để tư vấn khoản vay cho <b>'+brand+' '+name+'</b>.</p></div>';
     }
+    function fail(){ btn.disabled=false; btn.textContent='Gửi đăng ký'; alert('Gửi đăng ký lỗi, vui lòng kiểm tra mạng và thử lại, hoặc gọi hotline.'); }
     /* Lưu thông tin khách vào Firestore (collection "leads") để admin quản lý */
     try{
       firebase.firestore().collection('leads').add({
-        name:nm, phone:ph, city:ct, brand:brand, car:name, year:yr, status:'moi',
+        name:nm, phone:ph, city:ct, ward:wd, brand:brand, car:name, year:yr, status:'moi',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).then(done).catch(function(){ btn.disabled=false; btn.textContent='Gửi đăng ký'; alert('Gửi đăng ký lỗi, vui lòng thử lại hoặc gọi hotline.'); });
-    }catch(e){ done(); }
+      }).then(done).catch(fail);
+    }catch(e){ fail(); }
   };
 }
 $('close').onclick = function(){ $('overlay').classList.remove('show'); };
